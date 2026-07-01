@@ -20,3 +20,6 @@ App officially renamed from working title "Dino Dig" to **Wonder Quest**. Update
 
 ## [2026-07-01] plan | v1 implementation plan written
 Detailed 35-task implementation plan for Wonder Quest v1 created at `../docs/superpowers/plans/2026-07-01-wonder-quest-v1.md` (repo root `docs/`). Six phases: scaffold+Arabic-TTS spike → pure-Dart domain core (TDD) → services/shell → reusable engines → content porting from `raw/*.jsx` → seven lands → dashboard & TestFlight release readiness. Designed for execution by lower-powered subagents: each task is self-contained with exact file paths, interfaces, reading lists (wiki page + raw jsx), test-first steps, and commit points.
+
+## [2026-07-01] spike | Arabic TTS spike screen implemented (Task 3) — PENDING DEVICE VERIFICATION
+Created `app/lib/features/spike/tts_spike_screen.dart`: a debug-only screen (reachable from placeholder home) with buttons to list `ar-*` voices via `FlutterTts.getVoices`, speak `ب` and `بَطَّة` at rate 0.4 using the first available `ar-*` locale, and speak an English fallback. Results doc scaffolded at `wiki/requirements/arabic-tts-spike-result.md` (Status: needs-device-verification). Human must run on a real iPad in airplane mode to complete the go/no-go decision for Task 33 (Hoorof). Flutter analyze: 0 issues. Tests: all green.
