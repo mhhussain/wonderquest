@@ -194,5 +194,71 @@ void main() {
 
       expect(save1.hashCode, save2.hashCode);
     });
+
+    test('fromJson() materializes list/map copies to prevent mutation leaks', () {
+      // Build original SaveData with populated lists
+      final original = const SaveData(
+        schemaVersion: 1,
+        profileId: 'test-profile-1',
+        name: 'Hassan',
+        xp: 100,
+        level: 2,
+        stars: 5,
+        eggs: 5,
+        streak: 3,
+        soundOn: true,
+        hatched: ['dino1'],
+        stickers: ['sticker1'],
+        animalsFound: ['animal1'],
+        lettersMastered: ['A'],
+        lettersLearning: ['B'],
+        numbersMastered: ['1'],
+        progress: {'letter': 50, 'arabic': 0, 'number': 0, 'math': 0, 'animal': 0, 'world': 0, 'find': 0},
+        minutesToday: 30,
+        lastPlayedDate: '2024-01-15',
+        week: [10, 20, 0, 0, 0, 0, 0],
+        levels: {'big': [true, false], 'match': [true]},
+        world: WorldState(
+          visited: {'loc1': true},
+          points: 50,
+          discovery: {'card1': true},
+        ),
+      );
+
+      // Convert to JSON and restore via fromJson
+      final json = original.toJson();
+      final restored = SaveData.fromJson(json);
+
+      // Verify they are equal but not identical
+      expect(restored, original);
+      expect(identical(restored.hatched, original.hatched), false);
+      expect(identical(restored.stickers, original.stickers), false);
+      expect(identical(restored.animalsFound, original.animalsFound), false);
+      expect(identical(restored.lettersMastered, original.lettersMastered), false);
+      expect(identical(restored.lettersLearning, original.lettersLearning), false);
+      expect(identical(restored.numbersMastered, original.numbersMastered), false);
+      expect(identical(restored.levels['big'], original.levels['big']), false);
+      expect(identical(restored.world.visited, original.world.visited), false);
+      expect(identical(restored.world.discovery, original.world.discovery), false);
+
+      // Verify mutations on restored do not affect original
+      final originalHatchedLength = original.hatched.length;
+      restored.hatched.add('dino2');
+      expect(original.hatched.length, originalHatchedLength);
+      expect(original.hatched, ['dino1']);
+      expect(restored.hatched, ['dino1', 'dino2']);
+
+      final originalLevelsBigLength = original.levels['big']!.length;
+      restored.levels['big']!.add(true);
+      expect(original.levels['big']!.length, originalLevelsBigLength);
+      expect(original.levels['big'], [true, false]);
+      expect(restored.levels['big'], [true, false, true]);
+
+      final originalVisitedSize = original.world.visited.length;
+      restored.world.visited['loc2'] = false;
+      expect(original.world.visited.length, originalVisitedSize);
+      expect(original.world.visited, {'loc1': true});
+      expect(restored.world.visited, {'loc1': true, 'loc2': false});
+    });
   });
 }

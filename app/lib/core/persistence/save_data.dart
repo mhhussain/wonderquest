@@ -42,13 +42,9 @@ class WorldState {
 
   static WorldState fromJson(Map<String, dynamic> json) {
     return WorldState(
-      visited: (json['visited'] as Map<String, dynamic>?)
-              ?.cast<String, bool>() ??
-          {},
+      visited: Map<String, bool>.from(json['visited'] as Map? ?? {}),
       points: (json['points'] as int?) ?? 0,
-      discovery: (json['discovery'] as Map<String, dynamic>?)
-              ?.cast<String, bool>() ??
-          {},
+      discovery: Map<String, bool>.from(json['discovery'] as Map? ?? {}),
     );
   }
 }
@@ -283,7 +279,7 @@ class SaveData {
     final levels = <String, List<bool>>{};
     levelsJson.forEach((key, value) {
       if (value is List<dynamic>) {
-        levels[key] = value.cast<bool>();
+        levels[key] = value.cast<bool>().toList();
       }
     });
 
@@ -301,12 +297,12 @@ class SaveData {
       eggs: (json['eggs'] as int?) ?? 0,
       streak: (json['streak'] as int?) ?? 0,
       soundOn: (json['soundOn'] as bool?) ?? true,
-      hatched: (json['hatched'] as List<dynamic>?)?.cast<String>() ?? [],
-      stickers: (json['stickers'] as List<dynamic>?)?.cast<String>() ?? [],
-      animalsFound: (json['animalsFound'] as List<dynamic>?)?.cast<String>() ?? [],
-      lettersMastered: (json['lettersMastered'] as List<dynamic>?)?.cast<String>() ?? [],
-      lettersLearning: (json['lettersLearning'] as List<dynamic>?)?.cast<String>() ?? [],
-      numbersMastered: (json['numbersMastered'] as List<dynamic>?)?.cast<String>() ?? [],
+      hatched: (json['hatched'] as List<dynamic>?)?.cast<String>().toList() ?? [],
+      stickers: (json['stickers'] as List<dynamic>?)?.cast<String>().toList() ?? [],
+      animalsFound: (json['animalsFound'] as List<dynamic>?)?.cast<String>().toList() ?? [],
+      lettersMastered: (json['lettersMastered'] as List<dynamic>?)?.cast<String>().toList() ?? [],
+      lettersLearning: (json['lettersLearning'] as List<dynamic>?)?.cast<String>().toList() ?? [],
+      numbersMastered: (json['numbersMastered'] as List<dynamic>?)?.cast<String>().toList() ?? [],
       progress: progress,
       minutesToday: (json['minutesToday'] as int?) ?? 0,
       lastPlayedDate: (json['lastPlayedDate'] as String?) ?? '',
