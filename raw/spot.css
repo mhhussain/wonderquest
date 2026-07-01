@@ -1,0 +1,87 @@
+/* ============================================================
+   SPOT ME IF YOU CAN — styles
+   ============================================================ */
+
+.spot-dash-bg {
+  background:
+    radial-gradient(700px 360px at 12% -8%, #FFE9A8 0%, rgba(255,233,168,0) 60%),
+    radial-gradient(700px 360px at 92% 0%, #CDEFF6 0%, rgba(205,239,246,0) 55%),
+    linear-gradient(180deg, #FFF8EE 0%, #FFEFD6 100%);
+}
+
+/* dashboard grid */
+.spot-dash { display: grid; grid-template-columns: repeat(3, 250px); gap: 16px; }
+.spot-dashcard {
+  position: relative; border: none; cursor: pointer; border-radius: var(--r); overflow: hidden;
+  color: #fff; min-height: 140px; padding: 16px 18px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+  transition: transform .14s, box-shadow .14s;
+}
+.spot-dashcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.spot-dashcard:active { transform: scale(.97); }
+.spot-dashcard__deco { position: absolute; right: -22px; top: -22px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255,255,255,.16); }
+.spot-dashcard__e { font-size: 42px; line-height: 1; filter: drop-shadow(0 4px 4px rgba(0,0,0,.18)); margin-bottom: auto; }
+.spot-dashcard__t { font-family: var(--font-head); font-weight: 800; font-size: 19px; line-height: 1.08; }
+.spot-dashcard__s { font-size: 13px; font-weight: 700; opacity: .92; margin-top: 3px; }
+
+/* goal chips */
+.spot-goals { display: flex; gap: 8px; }
+.spot-goal { display: flex; align-items: center; gap: 5px; background: #fff; border-radius: 50px; padding: 6px 12px 6px 8px; box-shadow: var(--shadow-sm); transition: background .2s; }
+.spot-goal__c { font-size: 22px; }
+.spot-goal__n { font-family: var(--font-head); font-weight: 800; font-size: 15px; color: var(--ink); }
+.spot-goal.done { background: var(--green); }
+.spot-goal.done .spot-goal__n { color: #fff; }
+.spot-counter { color: #fff; font-family: var(--font-head); font-weight: 800; font-size: 20px; padding: 8px 18px; border-radius: 50px; box-shadow: var(--shadow-sm); }
+
+/* the scattered scene */
+.spot-scene { position: relative; border-radius: var(--r-lg); box-shadow: var(--shadow), inset 0 0 0 4px rgba(255,255,255,.4); overflow: hidden; }
+.spot-item { position: absolute; border: none; background: transparent; cursor: pointer; line-height: 1; padding: 0;
+  transition: transform .12s; }
+.spot-item__c { display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.16)); }
+.spot-item:active { transform: translate(-50%,-50%) scale(.86) !important; }
+.spot-item.found .spot-item__c { animation: spot-pop .5s; }
+@keyframes spot-pop { 0%{transform:scale(1)} 40%{transform:scale(1.5) rotate(8deg)} 100%{transform:scale(1.1)} }
+.spot-item__ring { position: absolute; inset: -8px; border: 4px solid; border-radius: 50%; animation: spot-ring .5s; pointer-events: none; }
+@keyframes spot-ring { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.spot-item__num { position: absolute; top: -10px; right: -10px; color: #fff; font-family: var(--font-head); font-weight: 800;
+  font-size: 14px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; animation: spot-pop .4s; }
+.spot-item.found { pointer-events: none; }
+
+.spot-miss { position: absolute; transform: translate(-50%,-50%); font-size: 30px; animation: spot-miss .5s forwards; pointer-events: none; z-index: 40; }
+@keyframes spot-miss { 0%{opacity:0;transform:translate(-50%,-50%) scale(.5)} 30%{opacity:1} 100%{opacity:0;transform:translate(-50%,-90%) scale(1.1)} }
+
+.spot-hint { margin-top: 12px; font-family: var(--font-head); font-weight: 800; color: var(--ink-soft); font-size: 16px; }
+.count-q { font-family: var(--font-head); font-weight: 800; font-size: 24px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.count-done { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); background: #fff; color: var(--green-d);
+  font-family: var(--font-head); font-weight: 800; font-size: 26px; padding: 10px 26px; border-radius: 50px; box-shadow: var(--shadow); animation: rise .4s; }
+
+/* ---------- Socks ---------- */
+.sock-pile { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; max-width: 720px; padding: 10px;
+  background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.sock { border: none; background: transparent; cursor: pointer; padding: 6px; border-radius: 16px; transition: transform .12s, background .15s; }
+.sock:active { transform: scale(.9); }
+.sock.picked { background: #FFF3D6; transform: translateY(-4px) scale(1.05); }
+.sock.matched { opacity: .35; }
+.sock__shape {
+  display: block; width: 66px; height: 88px;
+  clip-path: polygon(32% 0%, 60% 0%, 60% 56%, 86% 70%, 86% 92%, 32% 92%);
+  box-shadow: inset 0 10px 0 rgba(255,255,255,.55), inset 0 0 0 100px rgba(0,0,0,.03);
+}
+.sock__cuff { position: absolute; }
+.shake-x { animation: shake .5s; }
+
+/* ---------- Spot the Difference ---------- */
+.diff-wrap { display: flex; gap: 18px; }
+.diff-panel { position: relative; border-radius: var(--r); box-shadow: var(--shadow), inset 0 0 0 4px rgba(255,255,255,.4); overflow: hidden; }
+.diff-tag { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 20; background: rgba(255,255,255,.9);
+  font-family: var(--font-head); font-weight: 800; font-size: 13px; padding: 3px 14px; border-radius: 50px; }
+.diff-item { position: absolute; border: none; background: transparent; line-height: 1; padding: 0; cursor: default; }
+.diff-panel:last-child .diff-item { cursor: pointer; }
+.diff-item.found { animation: spot-pop .5s; }
+.diff-hole { position: absolute; width: 44px; height: 44px; transform: translate(-50%,-50%); border: none; background: transparent; cursor: pointer; border-radius: 50%; }
+.diff-ring { position: absolute; inset: -6px; border: 4px solid var(--coral); border-radius: 50%; animation: spot-ring .5s; }
+.diff-item.found .diff-ring { inset: -10px; }
+
+@media (max-width: 1100px) {
+  .diff-wrap { gap: 10px; }
+}

@@ -1,0 +1,154 @@
+/* ============================================================
+   AROUND THE WORLD — styles
+   ============================================================ */
+
+.world-sky {
+  background:
+    radial-gradient(900px 460px at 50% -10%, #BFE6F5 0%, rgba(191,230,245,0) 60%),
+    linear-gradient(180deg, #E8F6FC 0%, #CDEAF6 100%);
+}
+
+/* ---------- World map (SVG continents) ---------- */
+.worldmap {
+  width: 940px; max-width: 100%; height: auto; max-height: 620px;
+  filter: drop-shadow(0 18px 36px rgba(40,90,120,.28));
+  border-radius: 34px;
+}
+.land { cursor: pointer; transition: transform .14s ease; transform-origin: center; transform-box: fill-box; }
+.land path { transition: filter .14s ease, transform .14s ease; }
+.land:hover { transform: translateY(-3px); }
+.land:hover path { filter: brightness(1.08) drop-shadow(0 8px 8px rgba(28,90,120,.4)); }
+.land:active { transform: scale(.97); }
+.land__icon { font-size: 46px; pointer-events: none; }
+.land__label {
+  font-family: var(--font-head); font-weight: 800; font-size: 19px; fill: #fff;
+  pointer-events: none; paint-order: stroke; stroke: rgba(40,46,42,.35); stroke-width: 3px;
+}
+.land__check { font-size: 30px; pointer-events: none; }
+.land--visited path { stroke: #fff; stroke-width: 5; }
+
+.world-legend { margin-top: 16px; font-family: var(--font-head); font-weight: 800; color: var(--ink-soft); font-size: 17px; text-align: center; }
+
+.passport-btn {
+  display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+  background: #fff; border-radius: 50px; padding: 9px 14px; box-shadow: var(--shadow-sm);
+  font-family: var(--font-head); font-weight: 800; font-size: 16px; color: var(--ink);
+}
+.passport-btn__count { background: var(--teal); color: #fff; border-radius: 50px; padding: 2px 9px; font-size: 14px; }
+
+/* ---------- Travel animation ---------- */
+.travel { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center;
+  background: linear-gradient(180deg, #7EC6EC 0%, #A9DBF2 55%, #CFEEFA 100%); }
+.travel__sky { position: absolute; inset: 0; }
+.cloud { position: absolute; font-size: 60px; top: calc(8% + var(--i) * 12%);
+  left: 110%; animation: cloud-move 3s linear infinite; animation-delay: calc(var(--i) * -0.4s); opacity: .9; }
+@keyframes cloud-move { from { transform: translateX(0); } to { transform: translateX(-160vw); } }
+.travel--board .cloud { animation-play-state: paused; }
+.travel__sea { position: absolute; bottom: -10px; left: 0; right: 0; text-align: center; font-size: 60px;
+  letter-spacing: -6px; opacity: .8; animation: sea-bob 2s ease-in-out infinite; }
+@keyframes sea-bob { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(6px);} }
+
+.travel__plane { font-size: 120px; position: relative; z-index: 4; filter: drop-shadow(0 12px 12px rgba(0,0,0,.25));
+  transition: transform 1.2s cubic-bezier(.4,.1,.3,1); }
+.travel--board .travel__plane { transform: translate(-320px, 180px) rotate(-8deg) scale(.8); }
+.travel--fly .travel__plane { transform: translate(0, -30px) rotate(-4deg); animation: plane-bob 2s ease-in-out infinite; }
+.travel--land .travel__plane { transform: translate(300px, -90px) rotate(-6deg) scale(.7); opacity: 0; }
+@keyframes plane-bob { 0%,100%{ transform: translateY(-30px) rotate(-4deg);} 50%{ transform: translateY(-58px) rotate(-2deg);} }
+
+.travel__banner {
+  position: absolute; bottom: 11%; left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,.95); border-radius: 22px; padding: 14px 28px; text-align: center;
+  box-shadow: var(--shadow); z-index: 5; display: flex; flex-direction: column; gap: 2px; min-width: 320px;
+}
+.travel__banner b { font-family: var(--font-head); font-weight: 800; font-size: 22px; }
+.travel__banner span { font-weight: 700; color: var(--ink-soft); }
+
+.travel__dest {
+  position: absolute; z-index: 3; width: 200px; height: 200px; border-radius: 50%;
+  background: linear-gradient(150deg, var(--c1), var(--c2));
+  display: grid; place-items: center; font-size: 110px;
+  box-shadow: var(--shadow-lg); transform: scale(0); opacity: 0; transition: transform 1.1s cubic-bezier(.2,.9,.3,1.3), opacity .6s;
+}
+.travel--land .travel__dest { transform: scale(1); opacity: 1; }
+
+/* ---------- Continent page ---------- */
+.fact-ribbon {
+  display: flex; align-items: center; gap: 12px; width: 100%; max-width: 880px;
+  border: none; cursor: pointer; text-align: left;
+  background: #fff; border-left: 8px solid var(--c1); border-radius: 16px;
+  padding: 12px 18px; box-shadow: var(--shadow-sm); font-weight: 700; font-size: 17px;
+}
+.fact-ribbon__icon { font-size: 26px; }
+.fact-ribbon__txt { flex: 1; }
+.fact-ribbon__say { font-size: 20px; opacity: .7; }
+
+.animal-world {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; width: 100%; max-width: 880px;
+}
+.animal-world__card {
+  border: none; cursor: pointer; background: #fff; border-radius: 20px; padding: 14px 6px;
+  box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: transform .12s, box-shadow .12s;
+}
+.animal-world__card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.animal-world__card:active { transform: scale(.94); }
+.animal-world__e { font-size: 46px; line-height: 1; }
+.animal-world__n { font-family: var(--font-head); font-weight: 800; font-size: 14px; }
+.animal-world__card.seen { box-shadow: var(--shadow-sm), inset 0 0 0 3px var(--green); }
+
+.animal-fact {
+  width: 100%; max-width: 880px; min-height: 70px; background: #fff; border-radius: 18px;
+  padding: 14px 20px; box-shadow: var(--shadow-sm); border-left: 8px solid var(--c1, var(--teal));
+  display: flex; flex-direction: column; gap: 3px; justify-content: center;
+}
+.animal-fact b { font-family: var(--font-head); font-weight: 800; font-size: 19px; }
+.animal-fact span { font-weight: 700; color: var(--ink-soft); }
+
+/* ---------- Hidden discovery ---------- */
+.find-count {
+  font-family: var(--font-head); font-weight: 800; font-size: 16px; color: #fff;
+  background: var(--teal); border-radius: 50px; padding: 8px 16px;
+}
+.find-scene {
+  width: 920px; max-width: 100%; background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow);
+  padding: 22px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; place-items: center;
+}
+.find-item {
+  border: none; background: transparent; cursor: pointer; font-size: 46px; line-height: 1;
+  width: 100%; aspect-ratio: 1; display: grid; place-items: center; border-radius: 14px;
+  transition: transform .1s, background .15s;
+}
+.find-item:hover { background: rgba(0,0,0,.04); }
+.find-item:active { transform: scale(.88) !important; }
+.find-item.found { background: var(--green); border-radius: 50%; animation: pop .4s; }
+
+/* ---------- Passport ---------- */
+.passport {
+  background: #FFF8EE; border-radius: var(--r-lg); padding: 26px 30px; width: 760px; max-width: 96vw;
+  box-shadow: var(--shadow-lg); position: relative; animation: rise .35s cubic-bezier(.2,.9,.3,1.4);
+  max-height: 92%; overflow-y: auto;
+}
+.passport__head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+.passport__head h2 { font-family: var(--font-head); font-weight: 800; font-size: 26px; }
+.passport__head p { font-weight: 700; color: var(--ink-soft); }
+.passport__pts { background: var(--yellow); color: var(--ink); font-family: var(--font-head); font-weight: 800; border-radius: 50px; padding: 8px 16px; }
+.passport__label { font-family: var(--font-head); font-weight: 800; font-size: 17px; margin: 18px 0 10px; }
+.passport__stamps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.stamp {
+  position: relative; border-radius: 16px; background: #F1E7D6; padding: 12px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; border: 2px dashed #D6C4A6;
+}
+.stamp.got { background: #fff; border: 2px solid var(--c1); }
+.stamp__e { font-size: 30px; filter: saturate(.4); }
+.stamp.got .stamp__e { filter: none; }
+.stamp__n { font-weight: 800; font-size: 10px; text-align: center; color: var(--ink-soft); line-height: 1.1; }
+.stamp__ring { position: absolute; top: 4px; right: 5px; background: var(--green); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+
+.passport__cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.wonder {
+  background: #fff; border-radius: 16px; padding: 12px 10px; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; cursor: pointer; min-height: 96px; justify-content: center;
+}
+.wonder.locked { background: #F1E7D6; cursor: default; }
+.wonder__e { font-size: 38px; }
+.wonder__t { font-weight: 800; font-size: 12px; color: var(--ink-soft); line-height: 1.2; }
