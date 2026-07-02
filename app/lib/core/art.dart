@@ -8,6 +8,7 @@ class Art {
     'rexy': '🦖',
     'egg': '🥚',
     'star': '⭐',
+    'streak': '🔥',
     'lock': '🔒',
     'parent': '👪',
     'sound-on': '🔊',

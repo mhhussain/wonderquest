@@ -60,7 +60,7 @@ class Hud extends ConsumerWidget {
               const Spacer(),
 
               // ── Coin badges: streak, stars, eggs ─────────────────────────
-              _Coin(artKey: '🔥', count: streak),
+              _Coin(artKey: 'streak', count: streak),
               const SizedBox(width: 8),
               _Coin(artKey: 'star', count: stars),
               const SizedBox(width: 8),
@@ -177,8 +177,8 @@ class _XpBar extends StatelessWidget {
 
 /// Emoji + numeric count badge (e.g. ⭐ 7).
 ///
-/// [artKey] is forwarded to [Art.glyph]; known semantic keys are translated
-/// to their emoji, unknown keys (e.g. literal '🔥') pass through unchanged.
+/// [artKey] is forwarded to [Art.glyph]; semantic keys are translated
+/// to their emoji via the Art lookup layer.
 class _Coin extends StatelessWidget {
   const _Coin({required this.artKey, required this.count});
 
