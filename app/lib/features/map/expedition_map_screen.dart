@@ -10,6 +10,8 @@ import '../../theme/wq_colors.dart';
 import '../../theme/wq_theme.dart';
 import '../../widgets/hud.dart';
 import '../../widgets/wq_button.dart';
+import '../parent/parent_gate.dart';
+import '../parent/settings_screen.dart';
 
 /// Home screen — the Expedition Map.
 ///
@@ -90,7 +92,17 @@ class ExpeditionMapScreen extends ConsumerWidget {
       body: Column(
         children: [
           // ── HUD ─────────────────────────────────────────────────────────────
-          Hud(onParentTap: () {}),
+          Hud(
+            onParentTap: () => showParentGate(context).then((passed) {
+              if (passed && context.mounted) {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DashboardScreen(),
+                  ),
+                );
+              }
+            }),
+          ),
 
           // ── Land grid ───────────────────────────────────────────────────────
           Expanded(
