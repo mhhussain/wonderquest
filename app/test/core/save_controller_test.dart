@@ -71,6 +71,12 @@ void main() {
       for (var i = 0; i < 10; i++) {
         if (i != 3) expect(s.levels['big']![i], isFalse);
       }
+
+      // File was written: a fresh store from the same dir should agree
+      final freshStore = SaveFileStore(tempDir);
+      final reloaded = await freshStore.load();
+      expect(reloaded.levels['big'], hasLength(10));
+      expect(reloaded.levels['big']![3], isTrue);
     });
 
     test(
@@ -91,6 +97,12 @@ void main() {
       final s = container.read(saveControllerProvider).requireValue;
       expect(s.eggs, 1);
       expect(s.hatched, contains('trex'));
+
+      // File was written: a fresh store from the same dir should agree
+      final freshStore = SaveFileStore(tempDir);
+      final reloaded = await freshStore.load();
+      expect(reloaded.eggs, 1);
+      expect(reloaded.hatched, contains('trex'));
     });
 
     test(
@@ -116,6 +128,35 @@ void main() {
       expect(s.stars, 0);
       expect(s.xp, 0);
       expect(s.level, 1);
+
+      // File was written: a fresh store from the same dir should agree
+      final freshStore = SaveFileStore(tempDir);
+      final reloaded = await freshStore.load();
+      expect(reloaded.profileId, profileId);
+      expect(reloaded.stars, 0);
+      expect(reloaded.xp, 0);
+      expect(reloaded.level, 1);
+    });
+
+    test(
+        '(e) two concurrent apply(Reward(stars:1)) both land — stars==2',
+        () async {
+      final container = makeContainer();
+      await container.read(saveControllerProvider.future);
+
+      final notifier = container.read(saveControllerProvider.notifier);
+      final f1 = notifier.apply(const Reward(stars: 1));
+      final f2 = notifier.apply(const Reward(stars: 1));
+      await Future.wait([f1, f2]);
+
+      // In-memory state shows both increments
+      final inMemory = container.read(saveControllerProvider).requireValue;
+      expect(inMemory.stars, 2);
+
+      // File was written: a fresh store from the same dir should see stars=2
+      final freshStore = SaveFileStore(tempDir);
+      final reloaded = await freshStore.load();
+      expect(reloaded.stars, 2);
     });
   });
 }

@@ -25,6 +25,11 @@ final saveControllerProvider =
 class SaveController extends AsyncNotifier<SaveData> {
   SaveFileStore get _store => ref.read(saveStoreProvider);
 
+  /// Serialises concurrent [_store.save] calls so they never race on the
+  /// shared `.tmp` file used by [SaveFileStore].  Seeded with an
+  /// already-completed [Future].
+  Future<void> _pendingSave = Future.value();
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
@@ -36,11 +41,23 @@ class SaveController extends AsyncNotifier<SaveData> {
   // ── Internal helper ────────────────────────────────────────────────────────
 
   /// Reads the current value, applies [updater], updates state, and persists.
+  ///
+  /// Uses `await future` only to block until build completes, then reads
+  /// `state.requireValue` synchronously so that two concurrent callers each
+  /// see the latest committed state rather than the same stale snapshot.
+  ///
+  /// Saves are chained through [_pendingSave] so that concurrent mutators
+  /// never overlap on the `.tmp` file used by [SaveFileStore].
   Future<void> _update(SaveData Function(SaveData) updater) async {
-    final current = await future; // waits for build if still loading
+    await future; // wait for build; do NOT capture the value
+    final current = state.requireValue; // synchronous read of current state
     final next = updater(current);
     state = AsyncData(next);
-    await _store.save(next);
+    // Chain save after any in-flight save to prevent concurrent .tmp conflicts.
+    final myFuture = _pendingSave.then<void>((_) => _store.save(next));
+    // Swallow errors on the chain so a failed save never stalls later ones.
+    _pendingSave = myFuture.catchError((dynamic _) {});
+    await myFuture;
   }
 
   // ── Public mutators ────────────────────────────────────────────────────────
@@ -72,6 +89,8 @@ class SaveController extends AsyncNotifier<SaveData> {
       while (list.length < totalGames) {
         list.add(false);
       }
+      // Guard: bad index is a silent no-op to avoid RangeError
+      if (index < 0 || index >= list.length) return s;
       list[index] = true;
       final newLevels = Map<String, List<bool>>.from(s.levels);
       newLevels[typeId] = list;
