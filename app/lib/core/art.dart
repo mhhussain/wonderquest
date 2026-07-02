@@ -13,6 +13,8 @@ class Art {
     'parent': '👪',
     'sound-on': '🔊',
     'sound-off': '🔇',
+    'map': '🗺',
+    'play': '▶',
   };
 
   /// Mascot key for the Rexy dinosaur
