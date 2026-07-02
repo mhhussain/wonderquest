@@ -42,6 +42,16 @@ void main() {
       expect(result.level, 1);
     });
 
+    test('exact boundary XP (level 1 + 100xp → level 2, xp 0)', () {
+      // Level 1, need 100 xp to level up to level 2
+      // Start with 0 xp, add 100 xp (exactly xpForLevel(1))
+      // 100 >= 100, so level up and subtract 100, leaving 0 xp
+      const reward = Reward(xp: 100);
+      final result = applyReward(initial, reward);
+      expect(result.level, 2);
+      expect(result.xp, 0);
+    });
+
     test('single level-up leaves remainder (level 1 + 130xp → level 2, xp 30)', () {
       // Level 1, need 100 xp to level up to level 2
       // Start with 0 xp, add 130 xp
