@@ -66,6 +66,9 @@ class _FlipCardState extends State<FlipCard>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
+    // Listen to controller to detect when animation crosses π/2 midpoint.
+    _controller.addListener(_handleAnimationProgress);
+
     // If starting flipped, set animation to the end state immediately.
     if (widget.startFlipped) {
       _controller.value = 1.0;
@@ -74,8 +77,20 @@ class _FlipCardState extends State<FlipCard>
 
   @override
   void dispose() {
+    _controller.removeListener(_handleAnimationProgress);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleAnimationProgress() {
+    final angle = _rotationAnimation.value;
+
+    // Fire onFlipped exactly once when angle first crosses π/2 (the midpoint)
+    // during a forward flip. This occurs when the back side first becomes visible.
+    if (!_hasCalledOnFlipped && angle >= math.pi / 2 && widget.onFlipped != null) {
+      widget.onFlipped!();
+      _hasCalledOnFlipped = true;
+    }
   }
 
   void _handleTap() {
@@ -84,49 +99,48 @@ class _FlipCardState extends State<FlipCard>
     } else {
       _controller.forward();
     }
+    // Toggle flip state. setState is not needed here; AnimatedBuilder rebuilds
+    // on animation changes, so this variable is read only when the animation fires.
     _isFlipped = !_isFlipped;
-
-    // Fire onFlipped only on the first flip (front → back).
-    if (!_hasCalledOnFlipped && _isFlipped && widget.onFlipped != null) {
-      widget.onFlipped!();
-      _hasCalledOnFlipped = true;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _handleTap,
-      child: AnimatedBuilder(
-        animation: _rotationAnimation,
-        builder: (context, child) {
-          final angle = _rotationAnimation.value;
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
+        child: AnimatedBuilder(
+          animation: _rotationAnimation,
+          builder: (context, child) {
+            final angle = _rotationAnimation.value;
 
-          // Determine which side to show based on animation progress.
-          // At 0 radians (0°), show front.
-          // At π radians (180°), show back.
-          // Swap at π/2 radians (90°).
-          final showBack = angle > math.pi / 2;
+            // Determine which side to show based on animation progress.
+            // At 0 radians (0°), show front.
+            // At π radians (180°), show back.
+            // Swap at π/2 radians (90°).
+            final showBack = angle > math.pi / 2;
 
-          // Create the perspective matrix with Y-axis rotation.
-          final matrix = Matrix4.identity()
-            ..setEntry(3, 2, 0.001) // Perspective
-            ..rotateY(angle);
+            // Create the perspective matrix with Y-axis rotation.
+            final matrix = Matrix4.identity()
+              ..setEntry(3, 2, 0.001) // Perspective
+              ..rotateY(angle);
 
-          return Transform(
-            transform: matrix,
-            alignment: Alignment.center,
-            child: showBack
-                ? Transform(
-                    // Flip the back content 180° so it reads correctly
-                    // (without this, it would be mirrored).
-                    transform: Matrix4.identity()..rotateY(math.pi),
-                    alignment: Alignment.center,
-                    child: widget.back,
-                  )
-                : widget.front,
-          );
-        },
+            return Transform(
+              transform: matrix,
+              alignment: Alignment.center,
+              child: showBack
+                  ? Transform(
+                      // Flip the back content 180° so it reads correctly
+                      // (without this, it would be mirrored).
+                      transform: Matrix4.identity()..rotateY(math.pi),
+                      alignment: Alignment.center,
+                      child: widget.back,
+                    )
+                  : widget.front,
+            );
+          },
+        ),
       ),
     );
   }

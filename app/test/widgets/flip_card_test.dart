@@ -66,14 +66,19 @@ void main() {
 
         // Tap to flip.
         await tester.tap(find.byType(FlipCard));
+
+        // Advance animation - onFlipped fires when angle first crosses π/2 (~200ms).
+        // First, pump 150ms: should be before π/2, callback not yet fired.
+        await tester.pump(const Duration(milliseconds: 150));
+        expect(flipCount, equals(0), reason: 'onFlipped should not fire before π/2 midpoint');
+
+        // Pump and settle remaining 250ms: animation completes, callback fires at ~200ms.
         await tester.pumpAndSettle();
+        expect(flipCount, equals(1), reason: 'onFlipped should fire exactly once at π/2 midpoint');
 
         // Back now visible.
         expect(find.byKey(const Key('front')), findsNothing);
         expect(find.byKey(const Key('back')), findsOneWidget);
-
-        // onFlipped called once.
-        expect(flipCount, equals(1));
 
         // Tap again to flip back.
         await tester.tap(find.byType(FlipCard));
