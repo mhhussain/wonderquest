@@ -34,5 +34,25 @@ void main() {
       expect(scorer.coverage, closeTo(0.0, 1e-9));
       expect(scorer.done, isFalse);
     });
+
+    test('threshold boundary: 0.80 not done, 0.90 done', () {
+      // 8 / 10 = 0.80 — just below the 0.85 threshold.
+      final scorer8 = TraceScorer(guidePoints: hLine(), tolerance: 4);
+      for (var i = 0; i < 8; i++) {
+        scorer8.addStrokePoint(Offset(i * 10.0, 0));
+      }
+      expect(scorer8.coverage, closeTo(0.80, 1e-9));
+      expect(scorer8.done, isFalse,
+          reason: '0.80 is below the 0.85 done threshold');
+
+      // 9 / 10 = 0.90 — above the threshold.
+      final scorer9 = TraceScorer(guidePoints: hLine(), tolerance: 4);
+      for (var i = 0; i < 9; i++) {
+        scorer9.addStrokePoint(Offset(i * 10.0, 0));
+      }
+      expect(scorer9.coverage, closeTo(0.90, 1e-9));
+      expect(scorer9.done, isTrue,
+          reason: '0.90 is above the 0.85 done threshold');
+    });
   });
 }

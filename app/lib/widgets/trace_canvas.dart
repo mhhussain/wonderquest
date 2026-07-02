@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class TraceCanvas extends StatefulWidget {
     required this.glyph,
     this.fontFamily = 'Baloo2',
     required this.onCovered,
+    @visibleForTesting this.debugGuidePoints,
   });
 
   /// The character or string to trace (e.g. `'B'`, `'ب'`).
@@ -38,6 +40,54 @@ class TraceCanvas extends StatefulWidget {
 
   /// Called exactly once when stroke coverage reaches ≥ 85 %.
   final VoidCallback onCovered;
+
+  /// Pre-computed guide points that bypass raster extraction.
+  ///
+  /// Provided only in tests (via `@visibleForTesting`).  The scorer is
+  /// initialised immediately in `initState` without running the async
+  /// rasterisation pipeline, making the gesture→coverage→[onCovered] path
+  /// independently verifiable without depending on font rendering.
+  @visibleForTesting
+  final List<Offset>? debugGuidePoints;
+
+  // ---------------------------------------------------------------------------
+  // Extraction helpers (exposed for unit-testing the raster-sampling logic).
+  // ---------------------------------------------------------------------------
+
+  /// Samples a [gridDim]×[gridDim] grid over the glyph bounding box
+  /// ([glyphW]×[glyphH]) within a [rasterSize]×[rasterSize] raster encoded
+  /// as premultiplied RGBA ([byteData]).  Returns the widget-space [Offset]
+  /// of every grid cell whose pixel alpha > 0, using [scale] = widgetW /
+  /// rasterSize.
+  ///
+  /// This is the pure sampling step inside [_TraceCanvasState._extractGuidePoints];
+  /// separating it allows unit tests to verify the logic with synthetic byteData
+  /// without requiring real font rendering.
+  @visibleForTesting
+  static List<Offset> sampleGridFromRaster({
+    required ByteData byteData,
+    required int rasterSize,
+    required int gridDim,
+    required double glyphW,
+    required double glyphH,
+    required double scale,
+  }) {
+    final guidePoints = <Offset>[];
+    for (var row = 0; row < gridDim; row++) {
+      for (var col = 0; col < gridDim; col++) {
+        final cx = col * glyphW / gridDim + glyphW / (2.0 * gridDim);
+        final cy = row * glyphH / gridDim + glyphH / (2.0 * gridDim);
+        final px = cx.toInt().clamp(0, rasterSize - 1);
+        final py = cy.toInt().clamp(0, rasterSize - 1);
+        final byteIndex = (py * rasterSize + px) * 4;
+        final alpha = byteData.getUint8(byteIndex + 3);
+        if (alpha > 0) {
+          guidePoints.add(Offset(cx * scale, cy * scale));
+        }
+      }
+    }
+    return guidePoints;
+  }
 
   @override
   State<TraceCanvas> createState() => _TraceCanvasState();
@@ -88,6 +138,14 @@ class _TraceCanvasState extends State<TraceCanvas>
     _sparkleFade = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _sparkleCtrl, curve: Curves.easeOut),
     );
+
+    // Bypass async raster extraction when the caller provides points directly
+    // (e.g., in widget tests via [TraceCanvas.debugGuidePoints]).
+    final pts = widget.debugGuidePoints;
+    if (pts != null && pts.isNotEmpty) {
+      _scorer = TraceScorer(guidePoints: pts);
+      _extractionStarted = true;
+    }
   }
 
   @override
@@ -133,26 +191,27 @@ class _TraceCanvasState extends State<TraceCanvas>
 
     if (byteData == null || !mounted) return;
 
-    final scaleX = widgetSize.width / rasterSize;
-    final scaleY = widgetSize.height / rasterSize;
-    const cellSize = rasterSize / gridDim;
+    // Uniform scale matches the guide CustomPainter which does
+    // canvas.scale(widgetW / 420) — both use the same transform so guide
+    // points and visible pixels share one coordinate space (Finding 1 / 2).
+    final scale = widgetSize.width / rasterSize;
 
-    final guidePoints = <Offset>[];
+    // Sample the 24×24 grid over the glyph's bounding box, not the full
+    // 420×420 raster.  Wide or short glyphs (e.g. Arabic) get a dense grid
+    // rather than sparse points clustered in one corner (Finding 3).
+    final glyphW = tp.width.clamp(0.0, rasterSize.toDouble());
+    final glyphH = tp.height.clamp(0.0, rasterSize.toDouble());
 
-    for (var row = 0; row < gridDim; row++) {
-      for (var col = 0; col < gridDim; col++) {
-        final px = (col * cellSize + cellSize / 2).toInt().clamp(0, rasterSize - 1);
-        final py = (row * cellSize + cellSize / 2).toInt().clamp(0, rasterSize - 1);
-        final byteIndex = (py * rasterSize + px) * 4;
-        final alpha = byteData.getUint8(byteIndex + 3);
-        if (alpha > 0) {
-          guidePoints.add(Offset(
-            (col * cellSize + cellSize / 2) * scaleX,
-            (row * cellSize + cellSize / 2) * scaleY,
-          ));
-        }
-      }
-    }
+    if (glyphW <= 0 || glyphH <= 0) return;
+
+    final guidePoints = TraceCanvas.sampleGridFromRaster(
+      byteData: byteData,
+      rasterSize: rasterSize,
+      gridDim: gridDim,
+      glyphW: glyphW,
+      glyphH: glyphH,
+      scale: scale,
+    );
 
     // Skip creating a scorer when the glyph rendered no visible pixels
     // (e.g. font not loaded in tests). onCovered will never fire in that case.
@@ -296,25 +355,82 @@ class _TraceCanvasState extends State<TraceCanvas>
 // Guide glyph widget
 // ---------------------------------------------------------------------------
 
-class _GlyphGuide extends StatelessWidget {
+/// Renders the guide glyph via the SAME [TextPainter] transform used by
+/// [_TraceCanvasState._extractGuidePoints]: a uniform scale of
+/// `widgetWidth / 420` with the origin at (0, 0) and [TextDirection.ltr].
+///
+/// Keeping both paths identical by construction ensures that guide points
+/// and visible pixels share one coordinate space (Findings 1 & 2).
+class _GlyphGuide extends StatefulWidget {
   const _GlyphGuide({required this.glyph, required this.fontFamily});
 
   final String glyph;
   final String fontFamily;
 
   @override
-  Widget build(BuildContext context) {
-    return FittedBox(
-      child: Text(
-        glyph,
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: 420,
-          color: WqColors.lines,
-        ),
-      ),
-    );
+  State<_GlyphGuide> createState() => _GlyphGuideState();
+}
+
+class _GlyphGuideState extends State<_GlyphGuide> {
+  late TextPainter _tp;
+
+  @override
+  void initState() {
+    super.initState();
+    _tp = _buildTextPainter();
   }
+
+  @override
+  void didUpdateWidget(_GlyphGuide old) {
+    super.didUpdateWidget(old);
+    if (old.glyph != widget.glyph || old.fontFamily != widget.fontFamily) {
+      _tp.dispose();
+      _tp = _buildTextPainter();
+    }
+  }
+
+  @override
+  void dispose() {
+    _tp.dispose();
+    super.dispose();
+  }
+
+  TextPainter _buildTextPainter() => TextPainter(
+        text: TextSpan(
+          text: widget.glyph,
+          style: TextStyle(
+            fontSize: 420,
+            fontFamily: widget.fontFamily,
+            color: WqColors.lines,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _GlyphGuidePainter(_tp));
+  }
+}
+
+/// Paints the guide glyph with a uniform [canvas.scale] of [size.width / 420]
+/// anchored at the origin — identical to the transform applied during raster
+/// extraction — so guide points and visible pixels share a coordinate space.
+class _GlyphGuidePainter extends CustomPainter {
+  const _GlyphGuidePainter(this._tp);
+
+  final TextPainter _tp;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 420);
+    _tp.paint(canvas, Offset.zero);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_GlyphGuidePainter old) => old._tp != _tp;
 }
 
 // ---------------------------------------------------------------------------
@@ -366,7 +482,9 @@ class _StrokePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_StrokePainter old) => true;
+  bool shouldRepaint(_StrokePainter old) =>
+      old.strokes.length != strokes.length ||
+      old.activeStroke.length != activeStroke.length;
 }
 
 // ---------------------------------------------------------------------------
