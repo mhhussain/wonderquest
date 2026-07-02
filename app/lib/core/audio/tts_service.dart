@@ -108,8 +108,12 @@ class TtsService {
         _voiceCache = voicesResult
             .whereType<Map>()
             .map((v) {
-              final mapData = Map<String, dynamic>.from(v);
-              return mapData.cast<String, String>();
+              // Safely extract locale and name, handling non-String values
+              // (iOS voice maps may include numeric fields).
+              return {
+                'locale': v['locale']?.toString() ?? '',
+                'name': v['name']?.toString() ?? '',
+              };
             })
             .toList();
       } else {
@@ -136,8 +140,9 @@ class TtsService {
   }
 
   /// Stop speaking.
+  /// Always stops the backend, regardless of soundOn state.
+  /// This allows stopping ongoing speech even if sound was toggled off mid-utterance.
   Future<void> stop() async {
-    if (!_soundOn()) return;
     await _tts.stop();
   }
 }
@@ -145,10 +150,11 @@ class TtsService {
 /// Provider for TtsService.
 /// Automatically wires up the real FlutterTts backend and reads soundOn from SaveController.
 final ttsServiceProvider = Provider<TtsService>((ref) {
-  final saveController = ref.read(saveControllerProvider);
-
   // Get soundOn from the current save data
+  // IMPORTANT: ref.read() is called INSIDE getSoundOn() to capture fresh state
+  // on every call, not a stale snapshot frozen at provider creation time.
   bool getSoundOn() {
+    final saveController = ref.read(saveControllerProvider);
     if (saveController.hasValue) {
       return saveController.requireValue.soundOn;
     }

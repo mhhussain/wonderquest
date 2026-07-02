@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonder_quest/core/audio/tts_service.dart';
+import 'package:wonder_quest/core/persistence/save_file.dart';
+import 'package:wonder_quest/core/save_controller.dart';
 
 /// Fake implementation of TtsBackend for testing.
 class FakeTtsBackend implements TtsBackend {
@@ -182,11 +186,131 @@ void main() {
         expect(fakeTts.calls, isEmpty);
       });
 
-      test('stop does not call tts', () async {
+      test('stop calls tts.stop() unconditionally, even when soundOn is false',
+          () async {
         fakeTts.resetCalls();
         await ttsService.stop();
 
-        expect(fakeTts.calls, isEmpty);
+        // stop() should call backend stop regardless of soundOn state
+        // This allows stopping ongoing speech even if sound was toggled off.
+        expect(
+          fakeTts.calls,
+          contains(('stop', null)),
+        );
+      });
+    });
+
+    group('ttsServiceProvider with soundOn state changes', () {
+      late Directory tempDir;
+      late SaveFileStore store;
+
+      setUp(() {
+        tempDir = Directory.systemTemp.createTempSync('tts_service_provider_test_');
+        store = SaveFileStore(tempDir);
+      });
+
+      tearDown(() {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      });
+
+      /// Creates a ProviderContainer with saveStoreProvider overridden to use
+      /// a temp dir, and ttsServiceProvider overridden to use a fake backend
+      /// instead of the real FlutterTts.
+      ProviderContainer makeContainer(FakeTtsBackend backend) {
+        return ProviderContainer.test(
+          overrides: [
+            saveStoreProvider.overrideWithValue(store),
+            // Override ttsServiceProvider to use fake backend instead of real FlutterTts
+            ttsServiceProvider.overrideWith((ref) {
+              bool getSoundOn() {
+                final saveController = ref.read(saveControllerProvider);
+                if (saveController.hasValue) {
+                  return saveController.requireValue.soundOn;
+                }
+                return true;
+              }
+              return TtsService(backend, soundOn: getSoundOn);
+            }),
+          ],
+        );
+      }
+
+      test(
+          'flipping soundOn in save state changes speak gating on next call',
+          () async {
+        final backend = FakeTtsBackend();
+        final container = makeContainer(backend);
+
+        // Wait for SaveController to load
+        await container.read(saveControllerProvider.future);
+
+        // Initially soundOn is true (default), so speak should call tts
+        backend.resetCalls();
+        final service1 = container.read(ttsServiceProvider);
+        await service1.speak('Hello');
+        expect(
+          backend.calls.where((c) => c.$1 == 'speak').length,
+          greaterThan(0),
+          reason: 'speak should call tts when soundOn is true',
+        );
+
+        // Toggle sound off
+        await container
+            .read(saveControllerProvider.notifier)
+            .toggleSound();
+
+        // On next call to the provider's soundOn callback, it should read
+        // the updated soundOn=false state, so speak should not call tts
+        backend.resetCalls();
+        final service2 = container.read(ttsServiceProvider);
+        await service2.speak('Hello again');
+        expect(
+          backend.calls.where((c) => c.$1 == 'speak').length,
+          0,
+          reason: 'speak should not call tts when soundOn is false',
+        );
+
+        // Toggle sound back on
+        await container
+            .read(saveControllerProvider.notifier)
+            .toggleSound();
+
+        // Now speak should call tts again
+        backend.resetCalls();
+        final service3 = container.read(ttsServiceProvider);
+        await service3.speak('Hello once more');
+        expect(
+          backend.calls.where((c) => c.$1 == 'speak').length,
+          greaterThan(0),
+          reason: 'speak should call tts when soundOn is toggled back on',
+        );
+      });
+
+      test(
+          'stop() calls backend unconditionally even when soundOn is false via provider',
+          () async {
+        final backend = FakeTtsBackend();
+        final container = makeContainer(backend);
+
+        await container.read(saveControllerProvider.future);
+
+        // Toggle sound off
+        await container
+            .read(saveControllerProvider.notifier)
+            .toggleSound();
+
+        // stop() should still call backend stop even though soundOn is false
+        backend.resetCalls();
+        final service = container.read(ttsServiceProvider);
+        await service.stop();
+
+        expect(
+          backend.calls,
+          contains(('stop', null)),
+          reason: 'stop() should call backend unconditionally',
+        );
       });
     });
   });
