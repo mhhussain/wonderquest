@@ -108,7 +108,7 @@ class _SpotSceneState extends ConsumerState<SpotScene>
   // Tap handling
   // ---------------------------------------------------------------------------
 
-  void _onItemTap(PlacedItem item, TapUpDetails details) {
+  void _onItemTap(PlacedItem item) {
     if (_done) return;
     final sfx = ref.read(sfxServiceProvider);
 
@@ -144,9 +144,9 @@ class _SpotSceneState extends ConsumerState<SpotScene>
         );
       }
     } else if (!item.isTarget) {
-      // Wrong tap: show ripple.
+      // Wrong tap: show ripple centered on the tapped item.
       sfx.play(Sfx.wrong);
-      setState(() => _missPos = details.localPosition);
+      setState(() => _missPos = item.pos);
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) setState(() => _missPos = null);
       });
@@ -202,8 +202,10 @@ class _SpotSceneState extends ConsumerState<SpotScene>
                 Positioned(
                   left: _missPos!.dx - 24,
                   top: _missPos!.dy - 24,
-                  child: const IgnorePointer(
-                    child: _MissRipple(),
+                  // ignore: prefer_const_constructors
+                  child: IgnorePointer(
+                    // ignore: prefer_const_constructors
+                    child: _MissRipple(key: const ValueKey('spot-miss')),
                   ),
                 ),
             ],
@@ -296,7 +298,7 @@ class _SpotSceneState extends ConsumerState<SpotScene>
       child: GestureDetector(
         key: ValueKey('spot-item-${item.id}'),
         behavior: HitTestBehavior.opaque,
-        onTapUp: (details) => _onItemTap(item, details),
+        onTapUp: (_) => _onItemTap(item),
         child: SizedBox(
           width: hitSize,
           height: hitSize,
@@ -374,7 +376,7 @@ class _GoalChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: done ? Colors.white : WqColors.ink,
+                color: done ? WqColors.card : WqColors.ink,
               ),
             ),
           ],
@@ -389,7 +391,7 @@ class _GoalChip extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _MissRipple extends StatefulWidget {
-  const _MissRipple();
+  const _MissRipple({super.key});
 
   @override
   State<_MissRipple> createState() => _MissRippleState();
