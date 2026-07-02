@@ -68,5 +68,7 @@ final sfxServiceProvider = Provider<SfxService>((ref) {
     return true;
   }
 
-  return SfxService(AudioPlayer(), soundOn: getSoundOn);
+  final player = AudioPlayer();
+  ref.onDispose(player.dispose);
+  return SfxService(player, soundOn: getSoundOn);
 });
