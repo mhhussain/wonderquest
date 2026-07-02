@@ -141,6 +141,10 @@ void main() {
 
       // Tap Hatch!
       await tester.tap(find.byKey(const Key('hatch-btn')));
+      // Kick off _hatch() async body (runs until Future.delayed).
+      await tester.pump();
+      // Advance clock past the 600ms crack-animation delay.
+      await tester.pump(const Duration(milliseconds: 700));
       // Drain the SaveController._update async chain.
       await tester.pump();
       await tester.pump();
@@ -157,6 +161,44 @@ void main() {
       // The hatched dino name must be one of the kDinos roster.
       final dinoNames = kDinos.map((d) => d.name).toList();
       expect(dinoNames, contains(save.hatched.first));
+    });
+
+    // ── Test 5: Hatch button disabled at 0 eggs ───────────────────────────────
+
+    testWidgets('Hatch! button is disabled (no-op) when eggs == 0',
+        (tester) async {
+      // Default store has 0 eggs — no explicit seed needed.
+      await tester.pumpWidget(_mapApp(store));
+      await tester.pump();
+      await tester.pump();
+
+      // Open the My Stuff / Collections modal.
+      await tester.tap(find.byKey(const Key('my-stuff-btn')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const Key('collections-modal')), findsOneWidget);
+
+      // Capture save state before tapping.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ExpeditionMapScreen)),
+      );
+      final saveBefore = container.read(saveControllerProvider).requireValue;
+      expect(saveBefore.eggs, 0, reason: 'precondition: 0 eggs');
+
+      // Tap the button — it should be disabled (null onTap) so nothing happens.
+      await tester.tap(
+        find.byKey(const Key('hatch-btn')),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pump();
+
+      // Save should be unchanged.
+      final saveAfter = container.read(saveControllerProvider).requireValue;
+      expect(saveAfter.eggs, 0, reason: 'eggs should remain 0');
+      expect(saveAfter.hatched, isEmpty, reason: 'no dino should be hatched');
     });
   });
 }

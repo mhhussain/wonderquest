@@ -32,6 +32,7 @@ class Art {
     // Collections UI
     'bag': '🎒',
     'sparkle': '✨',
+    'close': '✕',
     // Dino roster (each hatchable dinosaur)
     'dino-bronto': '🦕',
     'dino-rexy-jr': '🦖',

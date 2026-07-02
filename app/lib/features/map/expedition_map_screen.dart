@@ -412,6 +412,9 @@ class _CollectionsModalState extends ConsumerState<_CollectionsModal> {
   String _tab = 'dinos';
   bool _hatching = false;
 
+  /// Name of the dino being cracked open (non-null during the animation phase).
+  String? _hatchingDino;
+
   Future<void> _hatch() async {
     if (_hatching) return;
     final save = ref.read(saveControllerProvider).value;
@@ -423,9 +426,24 @@ class _CollectionsModalState extends ConsumerState<_CollectionsModal> {
     if (available.isEmpty) return;
 
     final pick = available[Random().nextInt(available.length)];
-    setState(() => _hatching = true);
+
+    // Start crack animation on the chosen slot.
+    setState(() {
+      _hatching = true;
+      _hatchingDino = pick.name;
+    });
+
+    // Wait for the crack animation to finish (~600ms) before revealing dino.
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
     await ref.read(saveControllerProvider.notifier).hatchEgg(pick.name);
-    if (mounted) setState(() => _hatching = false);
+    if (mounted) {
+      setState(() {
+        _hatching = false;
+        _hatchingDino = null;
+      });
+    }
   }
 
   @override
@@ -462,6 +480,7 @@ class _CollectionsModalState extends ConsumerState<_CollectionsModal> {
                       hatched: hatched,
                       eggs: eggs,
                       hatching: _hatching,
+                      hatchingDino: _hatchingDino,
                       onHatch: _hatch,
                     )
                   : _tab == 'stickers'
@@ -495,13 +514,13 @@ class _ModalHeader extends StatelessWidget {
           GestureDetector(
             key: const Key('collections-close'),
             onTap: onClose,
-            child: const SizedBox(
-              width: 44,
-              height: 44,
+            child: SizedBox(
+              width: 64,
+              height: 64,
               child: Center(
                 child: Text(
-                  '✕',
-                  style: TextStyle(
+                  Art.emoji('close'),
+                  style: const TextStyle(
                     fontSize: 20,
                     color: WqColors.softInk,
                     fontWeight: FontWeight.bold,
@@ -547,6 +566,8 @@ class _TabRow extends StatelessWidget {
               onTap: () => onTabSelected(id),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
+                constraints: const BoxConstraints(minHeight: 64),
+                alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 8,
@@ -593,12 +614,18 @@ class _DinosTab extends StatelessWidget {
     required this.hatched,
     required this.eggs,
     required this.hatching,
+    required this.hatchingDino,
     required this.onHatch,
   });
 
   final List<String> hatched;
   final int eggs;
   final bool hatching;
+
+  /// Name of the specific dino whose slot is currently playing the crack
+  /// animation. Null when not hatching.
+  final String? hatchingDino;
+
   final VoidCallback onHatch;
 
   @override
@@ -616,7 +643,11 @@ class _DinosTab extends StatelessWidget {
               childAspectRatio: 1.1,
               children: kDinos.map((dino) {
                 final isHatched = hatched.contains(dino.name);
-                return _DinoSlot(dino: dino, isHatched: isHatched);
+                return _DinoSlot(
+                  dino: dino,
+                  isHatched: isHatched,
+                  isHatching: hatchingDino == dino.name,
+                );
               }).toList(),
             ),
           ),
@@ -639,7 +670,7 @@ class _DinosTab extends StatelessWidget {
                   key: const Key('hatch-btn'),
                   label: hatching ? 'Hatching...' : 'Hatch!',
                   color: eggs > 0 ? WqColors.orange : WqColors.softInk,
-                  onTap: onHatch,
+                  onTap: eggs > 0 ? onHatch : null,
                   fontSize: 16,
                 ),
               ),
@@ -652,11 +683,21 @@ class _DinosTab extends StatelessWidget {
 }
 
 /// One dino slot in the dino grid: hatched → emoji + name; unhatched → egg + ???
+///
+/// When [isHatching] is true (and not yet hatched), the egg plays a
+/// shake/scale crack animation via [_CrackingEgg] before the dino reveals.
 class _DinoSlot extends StatelessWidget {
-  const _DinoSlot({required this.dino, required this.isHatched});
+  const _DinoSlot({
+    required this.dino,
+    required this.isHatched,
+    this.isHatching = false,
+  });
 
   final DinoDef dino;
   final bool isHatched;
+
+  /// True while this specific slot's crack animation is running.
+  final bool isHatching;
 
   @override
   Widget build(BuildContext context) {
@@ -675,8 +716,16 @@ class _DinoSlot extends StatelessWidget {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: isHatched
-                ? Art.glyph(dino.emojiKey, size: 40)
-                : Art.glyph('egg', size: 40),
+                ? KeyedSubtree(
+                    key: ValueKey('dino-${dino.name}'),
+                    child: Art.glyph(dino.emojiKey, size: 40),
+                  )
+                : isHatching
+                    ? const _CrackingEgg()
+                    : KeyedSubtree(
+                        key: const ValueKey('egg-still'),
+                        child: Art.glyph('egg', size: 40),
+                      ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -690,6 +739,36 @@ class _DinoSlot extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Egg widget that plays a wiggle + scale-pop crack animation (~600ms).
+///
+/// Used by [_DinoSlot] while the hatch flow is in the pre-reveal phase.
+/// Plain widget only — no packages required.
+class _CrackingEgg extends StatelessWidget {
+  const _CrackingEgg() : super(key: const ValueKey('egg-cracking'));
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 600),
+      builder: (context, t, child) {
+        // Wiggle: oscillates 5 times and decays toward the end.
+        final angle = sin(t * pi * 5) * 0.18 * (1 - t);
+        // Scale: rises to 1.3× at the midpoint then settles back to 1.0.
+        final scale = 1.0 + 0.3 * sin(t * pi);
+        return Transform.scale(
+          scale: scale,
+          child: Transform.rotate(
+            angle: angle,
+            child: child!,
+          ),
+        );
+      },
+      child: Art.glyph('egg', size: 40),
     );
   }
 }

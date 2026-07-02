@@ -34,7 +34,9 @@ class WqButton extends StatefulWidget {
   final String? emojiKey;
 
   final Color color;
-  final VoidCallback onTap;
+
+  /// If null, the button renders with reduced opacity and is non-interactive.
+  final VoidCallback? onTap;
   final double fontSize;
 
   @override
@@ -61,69 +63,77 @@ class _WqButtonState extends State<WqButton> {
 
     final double faceTop = _pressed ? pressDepth : 0.0;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: SizedBox(
-        height: totalHeight,
-        child: Stack(
-          children: [
-            // ── Shadow band — always visible at the bottom ─────────────────
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: faceHeight,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: _shadowColor,
-                  borderRadius: BorderRadius.circular(32),
+    final bool enabled = widget.onTap != null;
+
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.45,
+      child: GestureDetector(
+        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+        onTapUp: enabled
+            ? (_) {
+                setState(() => _pressed = false);
+                widget.onTap!();
+              }
+            : null,
+        onTapCancel:
+            enabled ? () => setState(() => _pressed = false) : null,
+        child: SizedBox(
+          height: totalHeight,
+          child: Stack(
+            children: [
+              // ── Shadow band — always visible at the bottom ───────────────
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: faceHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _shadowColor,
+                    borderRadius: BorderRadius.circular(32),
+                  ),
                 ),
               ),
-            ),
-            // ── Button face — slides down [pressDepth] px on press ─────────
-            Positioned(
-              top: faceTop,
-              left: 0,
-              right: 0,
-              height: faceHeight,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: widget.color,
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.emojiKey != null) ...[
+              // ── Button face — slides down [pressDepth] px on press ───────
+              Positioned(
+                top: faceTop,
+                left: 0,
+                right: 0,
+                height: faceHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.emojiKey != null) ...[
+                            Text(
+                              widget.emojiKey!,
+                              style: TextStyle(fontSize: widget.fontSize),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                           Text(
-                            widget.emojiKey!,
-                            style: TextStyle(fontSize: widget.fontSize),
+                            widget.label,
+                            style: TextStyle(
+                              fontSize: widget.fontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                          const SizedBox(width: 8),
                         ],
-                        Text(
-                          widget.label,
-                          style: TextStyle(
-                            fontSize: widget.fontSize,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
