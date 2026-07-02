@@ -91,6 +91,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog>
   }
 
   void _onCheck() {
+    if (_shakeCtrl.isAnimating) return;
     final typed = int.tryParse(_entry);
     if (typed != null && typed == _a * _b) {
       Navigator.of(context).pop(true);
