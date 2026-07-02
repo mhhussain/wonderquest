@@ -135,6 +135,7 @@ class _DriftFieldWidgetState extends ConsumerState<DriftFieldWidget>
 
     if (_engine!.allCollected && !_done) {
       _done = true;
+      _ticker.stop();
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) widget.onAllCollected();
       });
