@@ -8,7 +8,7 @@ void main() {
     });
 
     test('letter ب (Baa) has correct record', () {
-      final baa = kArabicLetters[1]; // index 1 in alphabetical order
+      final baa = kArabicLetters.firstWhere((l) => l.g == 'ب');
       expect(baa.g, 'ب');
       expect(baa.nm, 'بَاء');
       expect(baa.tr, 'Baa');
@@ -34,12 +34,18 @@ void main() {
             true,
             reason: 'Letter ${letter.g} (${letter.tr}) has invalid dots code: "${letter.dots}"',
           );
+        } else {
+          expect(
+            letter.dots,
+            isNull,
+            reason: 'Letter ${letter.g} has dots but no base form',
+          );
         }
       }
     });
 
     test('confusable families are well-formed', () {
-      expect(kArabicConfusableFamilies.isNotEmpty, true);
+      expect(kArabicConfusableFamilies.length, 9);
       for (final family in kArabicConfusableFamilies) {
         expect(family.length, greaterThanOrEqualTo(2),
             reason: 'Family should have at least 2 letters');
