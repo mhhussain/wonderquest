@@ -21,6 +21,11 @@ import '../theme/wq_colors.dart';
 /// The grid has at most 5 columns and centres inside the available width.
 /// Each tile is at least 80 × 80 logical pixels (well above the 64 px
 /// hit-target floor).
+///
+/// The layout uses an [Expanded] internally, so this widget must be placed
+/// in a context with bounded vertical extent (e.g. `Scaffold.body`, a
+/// `SizedBox`, or an `Expanded` slot of a `Column`) — NOT directly inside a
+/// `ListView`/`SingleChildScrollView`, which would throw at runtime.
 class LevelSelect extends ConsumerWidget {
   const LevelSelect({
     super.key,
