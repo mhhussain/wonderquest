@@ -42,14 +42,20 @@ class SaveFileStore {
       final migratedJson = _migrate(json);
 
       return SaveData.fromJson(migratedJson);
-    } catch (e) {
-      // Corruption detected - quarantine the file and return initial
-      final corruptFile = File(_corruptPath);
-      await file.rename(corruptFile.path);
+    } on FormatException {
+      // Invalid JSON format - data corruption
+      await _quarantine(file);
+
+      final newProfileId = const Uuid().v4();
+      return SaveData.initial(profileId: newProfileId);
+    } on TypeError {
+      // Wrong JSON shape (e.g., list instead of map) - data corruption
+      await _quarantine(file);
 
       final newProfileId = const Uuid().v4();
       return SaveData.initial(profileId: newProfileId);
     }
+    // FileSystemException from readAsString will propagate
   }
 
   /// Save data to file atomically. Writes to .tmp first, then renames.
@@ -71,5 +77,11 @@ class SaveFileStore {
   Map<String, dynamic> _migrate(Map<String, dynamic> json) {
     // TODO: Handle schemaVersion > 1 migrations here
     return json;
+  }
+
+  /// Quarantine a corrupted save file by renaming it to .corrupt.json.
+  Future<void> _quarantine(File file) async {
+    final corruptFile = File(_corruptPath);
+    await file.rename(corruptFile.path);
   }
 }

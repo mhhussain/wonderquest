@@ -81,5 +81,26 @@ void main() {
       final tmpFile = File('${tempDir.path}/wonderquest_save.json.tmp');
       expect(tmpFile.existsSync(), isFalse);
     });
+
+    test('(e) load with valid JSON but wrong shape (list) returns initial and quarantines',
+        () async {
+      final store = SaveFileStore(tempDir);
+
+      // Write valid JSON but wrong shape (list instead of object)
+      final saveFile = File('${tempDir.path}/wonderquest_save.json');
+      await saveFile.writeAsString('[1, 2, 3]');
+
+      // Load should return initial
+      final data = await store.load();
+      expect(data.profileId, isNotEmpty);
+
+      // Original file should be renamed to .corrupt.json
+      final corruptFile =
+          File('${tempDir.path}/wonderquest_save.corrupt.json');
+      expect(corruptFile.existsSync(), isTrue);
+
+      // Original save.json should not exist
+      expect(saveFile.existsSync(), isFalse);
+    });
   });
 }
