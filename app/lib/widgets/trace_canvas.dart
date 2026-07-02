@@ -482,9 +482,9 @@ class _StrokePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_StrokePainter old) =>
-      old.strokes.length != strokes.length ||
-      old.activeStroke.length != activeStroke.length;
+  // Old and new painters hold the SAME mutable list instances, so any
+  // length/content comparison sees identical values and would never repaint.
+  bool shouldRepaint(_StrokePainter old) => true;
 }
 
 // ---------------------------------------------------------------------------
