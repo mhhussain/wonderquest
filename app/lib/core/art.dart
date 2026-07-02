@@ -15,6 +15,30 @@ class Art {
     'sound-off': '🔇',
     'map': '🗺',
     'play': '▶',
+    // Land icons (one per expedition-map land)
+    'land-letter': '🔤',
+    'land-hoorof': '🐪',
+    'land-number': '🔢',
+    'land-math': '➕',
+    'land-animal': '🦁',
+    'land-world': '🌍',
+    'land-find': '🔍',
+    'land-dino': '🦕',
+    'land-earth': '⛅',
+    'land-maze': '🌀',
+    'land-trace': '✏️',
+    'land-pattern': '🔺',
+    'land-reading': '📖',
+    // Collections UI
+    'bag': '🎒',
+    'sparkle': '✨',
+    // Dino roster (each hatchable dinosaur)
+    'dino-bronto': '🦕',
+    'dino-rexy-jr': '🦖',
+    'dino-stego': '🦴',
+    'dino-tricera': '🐲',
+    'dino-ptera': '🐉',
+    'dino-raptor': '🦎',
   };
 
   /// Mascot key for the Rexy dinosaur

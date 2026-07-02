@@ -19,8 +19,8 @@ void main() {
   });
 
   /// Builds [WonderQuestApp] inside a [ProviderScope] that supplies a temp-dir
-  /// [SaveFileStore]. Required because [PlayMinuteTicker] (added in Task 13)
-  /// reads [saveControllerProvider] from the widget tree.
+  /// [SaveFileStore]. Required because [PlayMinuteTicker] reads
+  /// [saveControllerProvider] from the widget tree.
   Widget buildApp() => ProviderScope(
         overrides: [
           saveStoreProvider.overrideWithValue(SaveFileStore(tempDir)),
@@ -28,13 +28,17 @@ void main() {
         child: const WonderQuestApp(),
       );
 
-  testWidgets('app boots and shows Wonder Quest title', (tester) async {
+  testWidgets('app boots and renders the expedition map', (tester) async {
     await tester.pumpWidget(buildApp());
-    expect(find.text('Wonder Quest'), findsOneWidget);
+    // ExpeditionMapScreen is the new home: the My Stuff button is always visible
+    // on the first synchronous frame even before save data loads.
+    expect(find.byKey(const Key('my-stuff-btn')), findsOneWidget);
   });
 
-  testWidgets('placeholder home shows TTS spike debug button', (tester) async {
+  testWidgets('expedition map shows the first land card (Letter Adventure)',
+      (tester) async {
     await tester.pumpWidget(buildApp());
-    expect(find.text('Arabic TTS Spike (Task 3)'), findsOneWidget);
+    // The letter land card is always in the first visible row of the grid.
+    expect(find.byKey(const Key('land-card-letter')), findsOneWidget);
   });
 }
