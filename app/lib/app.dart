@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'features/spike/tts_spike_screen.dart';
 import 'theme/wq_colors.dart';
 import 'theme/wq_theme.dart';
+import 'widgets/canvas_scaler.dart';
 
 class WonderQuestApp extends StatelessWidget {
   const WonderQuestApp({super.key});
@@ -13,7 +14,11 @@ class WonderQuestApp extends StatelessWidget {
       title: 'Wonder Quest',
       debugShowCheckedModeBanner: false,
       theme: WqTheme.theme,
-      home: const _PlaceholderHome(),
+      home: const CanvasScaler(
+        child: PlayMinuteTicker(
+          child: _PlaceholderHome(),
+        ),
+      ),
     );
   }
 }
