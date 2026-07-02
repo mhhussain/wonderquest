@@ -34,6 +34,7 @@ class CanvasScaler extends StatelessWidget {
         child: Center(
           child: FittedBox(
             fit: BoxFit.contain,
+            clipBehavior: Clip.hardEdge,
             child: SizedBox(
               width: designWidth,
               height: designHeight,
