@@ -37,6 +37,11 @@ void main() {
       expect(kConfusables['m'], equals('w'));
       expect(kConfusables['a'], equals('e'));
       expect(kConfusables['e'], equals('a'));
+      expect(kConfusables['n'], equals('h'));
+      expect(kConfusables['h'], equals('n'));
+      expect(kConfusables['u'], equals('n'));
+      expect(kConfusables['y'], equals('g'));
+      expect(kConfusables.length, equals(12));
     });
 
     test('match order has 20 letters', () {
