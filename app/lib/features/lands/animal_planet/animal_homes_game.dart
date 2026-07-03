@@ -37,6 +37,11 @@ class _AnimalHomesScreenState extends ConsumerState<AnimalHomesScreen> {
 
   bool _completing = false;
 
+  /// Tracks which habitat zone is currently being hovered over during a drag.
+  /// Used to distinguish wrong-zone drops from empty-space drops.
+  late final ValueNotifier<String?> _hoveredZoneId =
+      ValueNotifier<String?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -110,11 +115,18 @@ class _AnimalHomesScreenState extends ConsumerState<AnimalHomesScreen> {
     }
   }
 
-  void _onWrongDrop() {
-    unawaited(ref.read(sfxServiceProvider).play(Sfx.wrong));
-    unawaited(
-      ref.read(ttsServiceProvider).speak('Try another home!', rate: 0.95),
-    );
+  /// Called when a draggable is released without being accepted.
+  /// Only plays wrong-feedback if dropped over a different habitat zone;
+  /// silent if dropped on empty space.
+  void _onWrongDrop(Animal animal) {
+    final hoveredZone = _hoveredZoneId.value;
+    // Only play wrong feedback if dropped over a zone that's NOT the animal's home
+    if (hoveredZone != null && hoveredZone != animal.habitat) {
+      unawaited(ref.read(sfxServiceProvider).play(Sfx.wrong));
+      unawaited(
+        ref.read(ttsServiceProvider).speak('Try another home!', rate: 0.95),
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -164,9 +176,13 @@ class _AnimalHomesScreenState extends ConsumerState<AnimalHomesScreen> {
                       child: DragTarget<Animal>(
                         key: Key('zone-${h.id}'),
                         // Only accept animals that belong to this habitat.
-                        onWillAcceptWithDetails: (d) =>
-                            d.data.habitat == h.id,
+                        onWillAcceptWithDetails: (d) {
+                          // Track that we're hovering over this zone (tentatively)
+                          _hoveredZoneId.value = h.id;
+                          return d.data.habitat == h.id;
+                        },
                         onAcceptWithDetails: (d) {
+                          _hoveredZoneId.value = null;
                           unawaited(_onCorrectDrop(d.data));
                         },
                         builder: (ctx, candidateData, rejectedData) {
@@ -268,10 +284,14 @@ class _AnimalHomesScreenState extends ConsumerState<AnimalHomesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Draggable<Animal>(
                     data: a,
-                    // Fire wrong-feedback when chip is released without being
-                    // accepted by any DragTarget (includes dropping on a
-                    // wrong habitat zone that rejected it).
-                    onDraggableCanceled: (velocity, offset) => _onWrongDrop(),
+                    // Fire wrong-feedback only if dropped on a different habitat zone;
+                    // empty-space drops return silently and let the Draggable animation
+                    // restore the chip.
+                    onDraggableCanceled: (velocity, offset) {
+                      _onWrongDrop(a);
+                      // Reset hovered zone after drop is processed
+                      _hoveredZoneId.value = null;
+                    },
                     feedback: Material(
                       color: Colors.transparent,
                       child: Text(

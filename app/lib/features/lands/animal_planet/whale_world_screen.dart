@@ -441,7 +441,8 @@ class _DiveMeter extends StatelessWidget {
                 alignment: Alignment.bottomCenter,
                 child: FractionallySizedBox(
                   heightFactor: fraction,
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
                     key: Key(
                       'dive-fill-${whale.n.replaceAll(' ', '-')}',
                     ),

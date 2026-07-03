@@ -291,13 +291,23 @@ void main() {
         }
       }
 
-      // If no ocean animal was picked this session, the test still passes:
-      // there's no chip to drag onto a wrong zone.
-      if (chipFinder == null || wrongZoneId == null) return;
+      // Hard expectations: ensure an ocean animal and wrong zone were identified.
+      expect(
+        chipFinder,
+        isNotNull,
+        reason: 'Test needs at least one ocean animal chip to test wrong-habitat drop',
+      );
+      expect(
+        wrongZoneId,
+        isNotNull,
+        reason: 'Test needs a wrong zone ID to drop the animal on',
+      );
+      final chipFinder_ = chipFinder!;
+      final wrongZoneId_ = wrongZoneId!;
 
       // Get the center of the chip and the center of the wrong zone.
-      final chipCenter = tester.getCenter(chipFinder);
-      final wrongZoneFinder = find.byKey(Key('zone-$wrongZoneId'));
+      final chipCenter = tester.getCenter(chipFinder_);
+      final wrongZoneFinder = find.byKey(Key('zone-$wrongZoneId_'));
       expect(wrongZoneFinder, findsOneWidget);
       final wrongZoneCenter = tester.getCenter(wrongZoneFinder);
 
@@ -309,12 +319,93 @@ void main() {
       await gesture.up();
       await tester.pump(const Duration(milliseconds: 200));
 
+      // Verify wrong-feedback was played: Sfx.wrong + TTS utterance.
+      expect(
+        fakeSfx.played.contains(Sfx.wrong),
+        isTrue,
+        reason: 'Wrong-habitat drop should trigger Sfx.wrong',
+      );
+      expect(
+        fakeTts.spoken.contains('Try another home!'),
+        isTrue,
+        reason: 'Wrong-habitat drop should speak "Try another home!"',
+      );
+
       // The chip should still be visible in the tray (not added to placed).
       expect(
-        tester.any(chipFinder),
+        tester.any(chipFinder_),
         isTrue,
         reason:
             'Animal chip should still be in tray after wrong-habitat drop',
+      );
+    });
+
+    testWidgets('dropping animal on empty space does not play wrong feedback',
+        (tester) async {
+      final store = _MemStore();
+      final fakeSfx = _FakeSfxService();
+      final fakeTts = _FakeTtsBackend();
+
+      // Use seeded Random so pick is deterministic.
+      final rng = Random(42);
+
+      await tester.pumpWidget(
+        _harness(
+          child: AnimalHomesScreen(random: rng),
+          store: store,
+          fakeSfx: fakeSfx,
+          fakeTts: fakeTts,
+        ),
+      );
+      await _settle(tester);
+
+      // Find the first unpaced animal chip (just use the first draggable in the tray).
+      final chipFinder = find
+          .byType(Draggable<Animal>)
+          .first; // Pick the first draggable chip
+      expect(chipFinder, findsOneWidget);
+
+      // Get the center of the chip and a point far outside all zones
+      // (e.g., top-left corner of the screen).
+      final chipCenter = tester.getCenter(chipFinder);
+      final emptySpacePoint = const Offset(50, 50);
+
+      // Record the initial number of feedback plays.
+      final initialWrongCount =
+          fakeSfx.played.where((s) => s == Sfx.wrong).length;
+      final initialTtsCount =
+          fakeTts.spoken.where((s) => s == 'Try another home!').length;
+
+      // Simulate drag from chip to empty space (outside all zones).
+      final gesture = await tester.startGesture(chipCenter);
+      await tester.pump(const Duration(milliseconds: 100));
+      await gesture.moveTo(emptySpacePoint);
+      await tester.pump(const Duration(milliseconds: 100));
+      await gesture.up();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Verify NO wrong-feedback was played.
+      final finalWrongCount =
+          fakeSfx.played.where((s) => s == Sfx.wrong).length;
+      final finalTtsCount =
+          fakeTts.spoken.where((s) => s == 'Try another home!').length;
+
+      expect(
+        finalWrongCount,
+        equals(initialWrongCount),
+        reason: 'Empty-space drop should not trigger Sfx.wrong',
+      );
+      expect(
+        finalTtsCount,
+        equals(initialTtsCount),
+        reason: 'Empty-space drop should not speak "Try another home!"',
+      );
+
+      // The chip should still be in the tray.
+      expect(
+        tester.any(chipFinder),
+        isTrue,
+        reason: 'Animal chip should still be in tray after empty-space drop',
       );
     });
   });
