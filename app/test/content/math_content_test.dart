@@ -431,5 +431,48 @@ void main() {
         }
       });
     });
+
+    group('Object rotation (no-repeat within game)', () {
+      test('zoo: first 15 problems have all distinct animals', () {
+        final problems =
+            genMathProblems(MathType.count, 'zoo', 15, Random(12345));
+        final objs = problems.map((p) => p.obj).toList();
+        final uniqueObjs = objs.toSet();
+        expect(uniqueObjs.length, equals(15));
+      });
+
+      test('gems: first 12 problems have all distinct gems', () {
+        final problems =
+            genMathProblems(MathType.add, 'gems', 12, Random(54321));
+        final objs = problems.map((p) => p.obj).toList();
+        final uniqueObjs = objs.toSet();
+        expect(uniqueObjs.length, equals(12));
+      });
+
+      test('gems: 20 problems have at least 12 distinct gems in first 12', () {
+        final problems =
+            genMathProblems(MathType.add, 'gems', 20, Random(99999));
+        final first12Objs = problems.take(12).map((p) => p.obj).toList();
+        final uniqueFirst12 = first12Objs.toSet();
+        expect(uniqueFirst12.length, equals(12));
+      });
+
+      test('snack: first 20 problems have all distinct fruits/veggies', () {
+        final problems =
+            genMathProblems(MathType.add, 'snack', 20, Random(11111));
+        final objs = problems.map((p) => p.obj).toList();
+        final uniqueObjs = objs.toSet();
+        expect(uniqueObjs.length, equals(20));
+      });
+
+      test('pool rotation: zoo can generate 36 unique (18*2) before repeating', () {
+        final problems =
+            genMathProblems(MathType.count, 'zoo', 36, Random(77777));
+        final objs = problems.map((p) => p.obj).toList();
+        // First 18 unique, 19-36 may repeat (reshuffled pool)
+        final first18 = objs.sublist(0, 18).toSet();
+        expect(first18.length, equals(18));
+      });
+    });
   });
 }

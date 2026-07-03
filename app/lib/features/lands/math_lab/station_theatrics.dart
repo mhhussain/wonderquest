@@ -582,12 +582,12 @@ class _CookieMathSceneState extends State<CookieMathScene>
         // Monkey swings in on a vine
         SlideTransition(
           position: _slideAnim,
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('🌿', style: TextStyle(fontSize: 28)),
-              SizedBox(width: 4),
-              Text('🐵', style: TextStyle(fontSize: 44)),
+              const Text('🌿', style: TextStyle(fontSize: 28)),
+              const SizedBox(width: 4),
+              Art.glyph('monkey', size: 44),
             ],
           ),
         ),

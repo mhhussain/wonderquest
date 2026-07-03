@@ -252,11 +252,15 @@ class MathProblem {
 /// - compare: a, b 1–12, a ≠ b
 ///
 /// Pool routing (matches prototype):
-/// - 'zoo' → random animal from kZooAnimals per problem
-/// - 'gems' → random gem from kGems per problem
-/// - 'snack' → random fruit/veggie from kFruitsVeggies per problem
+/// - 'zoo' → animal from kZooAnimals, rotated without repeat per game
+/// - 'gems' → gem from kGems, rotated without repeat per game
+/// - 'snack' → fruit/veggie from kFruitsVeggies, rotated without repeat per game
 /// - 'eggs' / 'cookie' / 'morles' → station's fixed obj (prototype uses
 ///   theme.obj for sub and compare stations — no pool variation)
+///
+/// For pool stations, the pool is shuffled and items are drawn without replacement
+/// within a game window. Once exhausted, the pool is reshuffled and items drawn again
+/// (allowing repeats only after every item was used once).
 ///
 /// Choices: 4 for count/add/sub (answer + 3 near-answer distractors);
 /// compare always uses exactly [0, 1] ("B has more" / "A has more").
@@ -271,7 +275,7 @@ List<MathProblem> genMathProblems(
   // Pool stations vary the obj per problem; fixed stations use station.obj.
   final bool usePool =
       stationId == 'zoo' || stationId == 'gems' || stationId == 'snack';
-  final List<PoolItem>? pool = usePool
+  final List<PoolItem>? originalPool = usePool
       ? (stationId == 'zoo'
           ? kZooAnimals
           : stationId == 'gems'
@@ -281,6 +285,13 @@ List<MathProblem> genMathProblems(
   final String fixedObj = usePool
       ? ''
       : kMathStations.firstWhere((s) => s.id == stationId).obj;
+
+  // Initialize pool copy for non-repeating draws (for pool stations only).
+  late List<PoolItem> poolCopy;
+  if (usePool) {
+    poolCopy = List<PoolItem>.from(originalPool!);
+    _shuffleList(poolCopy, r);
+  }
 
   while (problems.length < n) {
     late int a, b, answer;
@@ -337,8 +348,19 @@ List<MathProblem> genMathProblems(
       choices = choiceSet.toList()..sort();
     }
 
-    // Pick object: pool stations draw randomly; fixed stations use station obj.
-    final obj = usePool ? pool![r.nextInt(pool.length)].emoji : fixedObj;
+    // Pick object: pool stations draw from shuffled pool without replacement;
+    // fixed stations use station obj.
+    late String obj;
+    if (usePool) {
+      // Draw from pool; if exhausted, reshuffle and continue.
+      if (poolCopy.isEmpty) {
+        poolCopy = List<PoolItem>.from(originalPool!);
+        _shuffleList(poolCopy, r);
+      }
+      obj = poolCopy.removeLast().emoji;
+    } else {
+      obj = fixedObj;
+    }
 
     problems.add(MathProblem(
       a: a,
@@ -350,4 +372,14 @@ List<MathProblem> genMathProblems(
   }
 
   return problems;
+}
+
+/// Fisher-Yates shuffle using the provided Random instance for determinism.
+void _shuffleList<T>(List<T> list, Random r) {
+  for (var i = list.length - 1; i > 0; i--) {
+    final j = r.nextInt(i + 1);
+    final temp = list[i];
+    list[i] = list[j];
+    list[j] = temp;
+  }
 }

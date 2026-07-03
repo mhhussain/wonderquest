@@ -46,6 +46,8 @@ class Art {
     // Number Kingdom game icons
     'numbers': '🔢',
     'abacus': '🧮',
+    // Math Lab characters
+    'monkey': '🐵',
   };
 
   /// Mascot key for the Rexy dinosaur
