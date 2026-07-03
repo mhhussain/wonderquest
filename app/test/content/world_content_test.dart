@@ -37,6 +37,25 @@ void main() {
         }
       });
 
+      test('every continent has non-empty blurb', () {
+        for (final c in kContinents) {
+          expect(c.blurb.isNotEmpty, isTrue,
+              reason: '${c.id} has empty blurb');
+        }
+      });
+
+      test('Africa has correct color2 hex and blurb', () {
+        final africa = kContinents.firstWhere((c) => c.id == 'africa');
+        expect(africa.color2.toARGB32(), equals(0xFFF2B441));
+        expect(africa.blurb, equals("Let's go on a safari!"));
+      });
+
+      test('Antarctica has correct color2 hex and blurb', () {
+        final ant = kContinents.firstWhere((c) => c.id == 'antarctica');
+        expect(ant.color2.toARGB32(), equals(0xFF8FC4DE));
+        expect(ant.blurb, equals('Explore the frozen ice!'));
+      });
+
       test('Africa mission finds lions', () {
         final africa = kContinents.firstWhere((c) => c.id == 'africa');
         expect(africa.mission.find, equals('🦁'));

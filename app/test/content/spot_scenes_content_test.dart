@@ -110,7 +110,7 @@ void main() {
       });
 
       test('has at least 3 titles in ladder', () {
-        expect(kDetectiveTitles.length, greaterThanOrEqualTo(3));
+        expect(kDetectiveTitles.length, equals(5));
       });
     });
   });

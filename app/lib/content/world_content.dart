@@ -38,15 +38,27 @@ class MiniGameSpec {
   @override
   String toString() => 'MiniGameSpec(type: $type)';
 
+  /// Deep comparison of params maps by comparing all keys and values.
+  bool _paramsEqual(Map<String, Object> other) {
+    if (params.keys.length != other.keys.length) return false;
+    for (final key in params.keys) {
+      if (!other.containsKey(key)) return false;
+      if (params[key] != other[key]) return false;
+    }
+    return true;
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is MiniGameSpec &&
           runtimeType == other.runtimeType &&
-          type == other.type;
+          type == other.type &&
+          _paramsEqual(other.params);
 
   @override
-  int get hashCode => type.hashCode;
+  int get hashCode => Object.hash(
+      type, Object.hashAllUnordered(params.entries.map((e) => Object.hash(e.key, e.value))));
 }
 
 /// A collectible discovery card shown on a continent (raw/cards-data.jsx).
@@ -129,6 +141,8 @@ class Continent {
   final String badge;
   final String theme;
   final Color color;
+  final Color color2;
+  final String blurb;
   final List<Animal> animals;
   final MissionSpec mission;
 
@@ -139,6 +153,8 @@ class Continent {
     required this.badge,
     required this.theme,
     required this.color,
+    required this.color2,
+    required this.blurb,
     required this.animals,
     required this.mission,
   });
@@ -193,6 +209,8 @@ const List<Continent> kContinents = [
     badge: '🦁',
     theme: 'Safari Adventure',
     color: Color(0xFFE8893B),
+    color2: Color(0xFFF2B441),
+    blurb: "Let's go on a safari!",
     animals: [
       Animal(emoji: '🦁', name: 'Lion', habitat: '',
           fact: "A lion's roar can be heard 5 miles away!"),
@@ -216,6 +234,8 @@ const List<Continent> kContinents = [
     badge: '🐼',
     theme: 'Panda Mountain',
     color: Color(0xFFD85B6A),
+    color2: Color(0xFFF2899A),
+    blurb: 'Climb the panda mountains!',
     animals: [
       Animal(emoji: '🐼', name: 'Panda', habitat: '',
           fact: 'Pandas eat bamboo for 12 hours every day!'),
@@ -239,6 +259,8 @@ const List<Continent> kContinents = [
     badge: '🦘',
     theme: 'Outback Discovery',
     color: Color(0xFFC9742E),
+    color2: Color(0xFFE8A54B),
+    blurb: 'Hop across the outback!',
     animals: [
       Animal(emoji: '🦘', name: 'Kangaroo', habitat: '',
           fact: 'Baby kangaroos are called joeys and ride in a pouch.'),
@@ -262,6 +284,8 @@ const List<Continent> kContinents = [
     badge: '🐧',
     theme: 'Frozen Mission',
     color: Color(0xFF4C8FB5),
+    color2: Color(0xFF8FC4DE),
+    blurb: 'Explore the frozen ice!',
     animals: [
       Animal(emoji: '🐧', name: 'Penguin', habitat: '',
           fact: 'Penguins huddle together to stay warm in the cold.'),
@@ -285,6 +309,8 @@ const List<Continent> kContinents = [
     badge: '🦅',
     theme: 'Forest & Lakes',
     color: Color(0xFF5C9E58),
+    color2: Color(0xFF92C77E),
+    blurb: 'Discover forests and lakes!',
     animals: [
       Animal(emoji: '🐻', name: 'Bear', habitat: '',
           fact: 'Bears take a long winter sleep called hibernation.'),
@@ -308,6 +334,8 @@ const List<Continent> kContinents = [
     badge: '🦥',
     theme: 'Amazon Rainforest',
     color: Color(0xFF3FA68A),
+    color2: Color(0xFF7CCBB0),
+    blurb: 'Swing through the rainforest!',
     animals: [
       Animal(emoji: '🦥', name: 'Sloth', habitat: '',
           fact: 'Sloths sleep up to 15 hours and move very, very slowly.'),
@@ -331,6 +359,8 @@ const List<Continent> kContinents = [
     badge: '🏰',
     theme: 'Castles & Forests',
     color: Color(0xFF8E72C7),
+    color2: Color(0xFFB7A2E0),
+    blurb: 'Visit castles and forests!',
     animals: [
       Animal(emoji: '🦔', name: 'Hedgehog', habitat: '',
           fact: 'Hedgehogs roll into a spiky ball when they feel scared.'),
