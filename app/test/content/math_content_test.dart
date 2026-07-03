@@ -325,14 +325,14 @@ void main() {
 
     group('MathProblem equality and hashing', () {
       test('two MathProblems with same values are equal', () {
-        final p1 = MathProblem(
+        final p1 = const MathProblem(
           a: 2,
           b: 3,
           answer: 5,
           choices: [4, 5, 6, 7],
           obj: '🍎',
         );
-        final p2 = MathProblem(
+        final p2 = const MathProblem(
           a: 2,
           b: 3,
           answer: 5,
@@ -343,7 +343,7 @@ void main() {
       });
 
       test('MathProblem hashCode is consistent', () {
-        final p = MathProblem(
+        final p = const MathProblem(
           a: 2,
           b: 3,
           answer: 5,

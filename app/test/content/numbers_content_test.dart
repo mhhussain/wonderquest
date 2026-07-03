@@ -179,32 +179,32 @@ void main() {
 
     group('CountRound equality and hashing', () {
       test('two CountRounds with same values are equal', () {
-        final r1 = CountRound(emoji: '🍎', count: 5);
-        final r2 = CountRound(emoji: '🍎', count: 5);
+        final r1 = const CountRound(emoji: '🍎', count: 5);
+        final r2 = const CountRound(emoji: '🍎', count: 5);
         expect(r1, equals(r2));
       });
 
       test('two CountRounds with different values are not equal', () {
-        final r1 = CountRound(emoji: '🍎', count: 5);
-        final r2 = CountRound(emoji: '🍌', count: 5);
+        final r1 = const CountRound(emoji: '🍎', count: 5);
+        final r2 = const CountRound(emoji: '🍌', count: 5);
         expect(r1, isNot(equals(r2)));
       });
 
       test('CountRound hashCode is consistent', () {
-        final r = CountRound(emoji: '🍎', count: 5);
+        final r = const CountRound(emoji: '🍎', count: 5);
         expect(r.hashCode, equals(r.hashCode));
       });
     });
 
     group('MissingNumberRound equality and hashing', () {
       test('two MissingNumberRounds with same values are equal', () {
-        final r1 = MissingNumberRound(
+        final r1 = const MissingNumberRound(
           seq: [1, 2, 3, 4, 5],
           missIdx: 2,
           answer: 3,
           choices: [3, 4, 5],
         );
-        final r2 = MissingNumberRound(
+        final r2 = const MissingNumberRound(
           seq: [1, 2, 3, 4, 5],
           missIdx: 2,
           answer: 3,
@@ -214,7 +214,7 @@ void main() {
       });
 
       test('MissingNumberRound hashCode is consistent', () {
-        final r = MissingNumberRound(
+        final r = const MissingNumberRound(
           seq: [1, 2, 3, 4, 5],
           missIdx: 2,
           answer: 3,

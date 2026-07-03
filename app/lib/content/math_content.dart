@@ -297,8 +297,15 @@ List<MathProblem> genMathProblems(
     // Build 4 choices for count/add/sub, or 2 for compare.
     final choiceCount = type == MathType.compare ? 2 : 4;
     final choiceSet = <int>{answer};
+    // Prefer near-answer distractors (offset [-2, +2]); after a bounded
+    // number of attempts fall back to uniform draws in [lo, hi] — near the
+    // range edges (e.g. count answer 1 or 12) fewer than 3 near-offsets
+    // exist and the near-only loop would never terminate.
+    var attempts = 0;
     while (choiceSet.length < choiceCount) {
-      final distractor = answer + (r.nextInt(5) - 2); // offset [-2, +2]
+      final distractor = attempts++ < 24
+          ? answer + (r.nextInt(5) - 2) // offset [-2, +2]
+          : lo + r.nextInt(hi - lo + 1);
       if (distractor >= lo && distractor <= hi && distractor != answer) {
         choiceSet.add(distractor);
       }
