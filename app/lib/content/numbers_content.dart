@@ -103,19 +103,19 @@ const List<String> kCountEmojis = [
 /// Uses injected Random for determinism. Ramping behavior:
 /// early rounds tend toward smaller counts, later rounds toward larger.
 ///
-/// Counts ramp from 1 to 12 across the list;
-/// each round picks a random emoji from the pool.
+/// Ramp formula matches raw/number.jsx CountGame:
+///   maxCount = min(12, 4 + floor(i / 2))
+/// i=0..1 → max 4; i=2..3 → max 5; … i=16+ → max 12.
 ///
-/// For a 90-item pool (10 games × 9 questions), each unique (emoji, count) pair
-/// may repeat at most twice across all games.
+/// Each round picks a random emoji from the pool.
 List<CountRound> genCountRounds(int n, Random r) {
   final rounds = <CountRound>[];
 
   for (int i = 0; i < n; i++) {
     final emoji = kCountEmojis[r.nextInt(kCountEmojis.length)];
-    // Ramp count from 1 up toward 12, influenced by progress.
-    final maxCount = 4 + (i ~/ 8);
-    final count = 1 + r.nextInt(maxCount.clamp(1, 12));
+    // Ramp: min(12, 4 + floor(i/2)) — matches prototype formula.
+    final maxCount = (4 + i ~/ 2).clamp(1, 12);
+    final count = 1 + r.nextInt(maxCount);
 
     rounds.add(CountRound(emoji: emoji, count: count));
   }
@@ -145,10 +145,14 @@ List<MissingNumberRound> genMissingRounds(int n, Random r) {
     final answer = seq[missIdx];
 
     // Build 3 choices: answer + 2 distractors.
+    // Bounded attempts (24) + uniform fallback prevent starvation when answer
+    // is near 1 or 20 (few valid near-answer distractors exist).
     final choiceSet = <int>{answer};
+    var attempts = 0;
     while (choiceSet.length < 3) {
-      final distractor =
-          answer + (r.nextInt(5) - 2); // offset [-2, +2] from answer
+      final distractor = attempts++ < 24
+          ? answer + (r.nextInt(5) - 2) // near-answer offset [-2, +2]
+          : 1 + r.nextInt(20); // uniform fallback in [1, 20]
       if (distractor >= 1 && distractor <= 20 && distractor != answer) {
         choiceSet.add(distractor);
       }

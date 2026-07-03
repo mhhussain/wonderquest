@@ -49,18 +49,21 @@ void main() {
       });
 
       test('early rounds have smaller average counts than late rounds', () {
+        // Ramp formula: min(12, 4 + floor(i/2)) reaches max at i=16.
+        // Compare a clearly-limited early window (i=0..7, maxCount 4..7)
+        // against the fully-unconstrained late window (i=72..89, maxCount=12).
         final rounds = genCountRounds(90, Random(42));
-        final firstHalf = rounds.sublist(0, 45);
-        final secondHalf = rounds.sublist(45);
+        final earlyWindow = rounds.sublist(0, 8);
+        final lateWindow = rounds.sublist(72);
 
-        final avgFirst =
-            firstHalf.map((r) => r.count).reduce((a, b) => a + b) /
-                firstHalf.length;
-        final avgSecond =
-            secondHalf.map((r) => r.count).reduce((a, b) => a + b) /
-                secondHalf.length;
+        final avgEarly =
+            earlyWindow.map((r) => r.count).reduce((a, b) => a + b) /
+                earlyWindow.length;
+        final avgLate =
+            lateWindow.map((r) => r.count).reduce((a, b) => a + b) /
+                lateWindow.length;
 
-        expect(avgFirst, lessThan(avgSecond));
+        expect(avgEarly, lessThan(avgLate));
       });
 
       test('generated rounds with same seed produce same sequence', () {

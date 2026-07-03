@@ -64,73 +64,83 @@ class MathStation {
 }
 
 /// A single object (emoji + name) for pool selection.
-class _PoolItem {
+class PoolItem {
   final String emoji;
   final String name;
 
-  const _PoolItem({required this.emoji, required this.name});
+  const PoolItem({required this.emoji, required this.name});
+}
+
+/// Element-wise list equality helper (no Flutter/collection import needed).
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }
 
 /// Zoo animals for "Count the Zoo": 18 animals.
-const List<_PoolItem> _kZooAnimalsData = [
-  _PoolItem(emoji: '🦁', name: 'lions'),
-  _PoolItem(emoji: '🐘', name: 'elephants'),
-  _PoolItem(emoji: '🦒', name: 'giraffes'),
-  _PoolItem(emoji: '🐵', name: 'monkeys'),
-  _PoolItem(emoji: '🦓', name: 'zebras'),
-  _PoolItem(emoji: '🐯', name: 'tigers'),
-  _PoolItem(emoji: '🦛', name: 'hippos'),
-  _PoolItem(emoji: '🐍', name: 'snakes'),
-  _PoolItem(emoji: '🦩', name: 'flamingos'),
-  _PoolItem(emoji: '🐧', name: 'penguins'),
-  _PoolItem(emoji: '🐢', name: 'turtles'),
-  _PoolItem(emoji: '🦘', name: 'kangaroos'),
-  _PoolItem(emoji: '🐼', name: 'pandas'),
-  _PoolItem(emoji: '🦜', name: 'parrots'),
-  _PoolItem(emoji: '🐪', name: 'camels'),
-  _PoolItem(emoji: '🦏', name: 'rhinos'),
-  _PoolItem(emoji: '🐊', name: 'crocodiles'),
-  _PoolItem(emoji: '🦚', name: 'peacocks'),
+const List<PoolItem> kZooAnimals = [
+  PoolItem(emoji: '🦁', name: 'lions'),
+  PoolItem(emoji: '🐘', name: 'elephants'),
+  PoolItem(emoji: '🦒', name: 'giraffes'),
+  PoolItem(emoji: '🐵', name: 'monkeys'),
+  PoolItem(emoji: '🦓', name: 'zebras'),
+  PoolItem(emoji: '🐯', name: 'tigers'),
+  PoolItem(emoji: '🦛', name: 'hippos'),
+  PoolItem(emoji: '🐍', name: 'snakes'),
+  PoolItem(emoji: '🦩', name: 'flamingos'),
+  PoolItem(emoji: '🐧', name: 'penguins'),
+  PoolItem(emoji: '🐢', name: 'turtles'),
+  PoolItem(emoji: '🦘', name: 'kangaroos'),
+  PoolItem(emoji: '🐼', name: 'pandas'),
+  PoolItem(emoji: '🦜', name: 'parrots'),
+  PoolItem(emoji: '🐪', name: 'camels'),
+  PoolItem(emoji: '🦏', name: 'rhinos'),
+  PoolItem(emoji: '🐊', name: 'crocodiles'),
+  PoolItem(emoji: '🦚', name: 'peacocks'),
 ];
 
 /// Gems for "Treasure Hunt": 12 gemstones.
-const List<_PoolItem> _kGemsData = [
-  _PoolItem(emoji: '💎', name: 'diamonds'),
-  _PoolItem(emoji: '🔴', name: 'rubies'),
-  _PoolItem(emoji: '🔵', name: 'sapphires'),
-  _PoolItem(emoji: '🟢', name: 'emeralds'),
-  _PoolItem(emoji: '🟣', name: 'amethysts'),
-  _PoolItem(emoji: '🟡', name: 'gold stones'),
-  _PoolItem(emoji: '🟠', name: 'amber stones'),
-  _PoolItem(emoji: '⚪', name: 'pearls'),
-  _PoolItem(emoji: '🔶', name: 'topaz gems'),
-  _PoolItem(emoji: '🔷', name: 'aqua gems'),
-  _PoolItem(emoji: '🟤', name: 'bronze stones'),
-  _PoolItem(emoji: '🪙', name: 'gold coins'),
+const List<PoolItem> kGems = [
+  PoolItem(emoji: '💎', name: 'diamonds'),
+  PoolItem(emoji: '🔴', name: 'rubies'),
+  PoolItem(emoji: '🔵', name: 'sapphires'),
+  PoolItem(emoji: '🟢', name: 'emeralds'),
+  PoolItem(emoji: '🟣', name: 'amethysts'),
+  PoolItem(emoji: '🟡', name: 'gold stones'),
+  PoolItem(emoji: '🟠', name: 'amber stones'),
+  PoolItem(emoji: '⚪', name: 'pearls'),
+  PoolItem(emoji: '🔶', name: 'topaz gems'),
+  PoolItem(emoji: '🔷', name: 'aqua gems'),
+  PoolItem(emoji: '🟤', name: 'bronze stones'),
+  PoolItem(emoji: '🪙', name: 'gold coins'),
 ];
 
 /// Fruits and vegetables for addition stations: 20 items.
-const List<_PoolItem> _kFruitsVeggiesData = [
-  _PoolItem(emoji: '🍎', name: 'apples'),
-  _PoolItem(emoji: '🍌', name: 'bananas'),
-  _PoolItem(emoji: '🍓', name: 'strawberries'),
-  _PoolItem(emoji: '🍇', name: 'grapes'),
-  _PoolItem(emoji: '🍊', name: 'oranges'),
-  _PoolItem(emoji: '🥕', name: 'carrots'),
-  _PoolItem(emoji: '🌽', name: 'corn cobs'),
-  _PoolItem(emoji: '🥦', name: 'broccoli'),
-  _PoolItem(emoji: '🍉', name: 'watermelons'),
-  _PoolItem(emoji: '🍐', name: 'pears'),
-  _PoolItem(emoji: '🍑', name: 'peaches'),
-  _PoolItem(emoji: '🍒', name: 'cherries'),
-  _PoolItem(emoji: '🍅', name: 'tomatoes'),
-  _PoolItem(emoji: '🥔', name: 'potatoes'),
-  _PoolItem(emoji: '🍆', name: 'eggplants'),
-  _PoolItem(emoji: '🥒', name: 'cucumbers'),
-  _PoolItem(emoji: '🫐', name: 'blueberries'),
-  _PoolItem(emoji: '🥝', name: 'kiwis'),
-  _PoolItem(emoji: '🍍', name: 'pineapples'),
-  _PoolItem(emoji: '🥬', name: 'lettuce'),
+const List<PoolItem> kFruitsVeggies = [
+  PoolItem(emoji: '🍎', name: 'apples'),
+  PoolItem(emoji: '🍌', name: 'bananas'),
+  PoolItem(emoji: '🍓', name: 'strawberries'),
+  PoolItem(emoji: '🍇', name: 'grapes'),
+  PoolItem(emoji: '🍊', name: 'oranges'),
+  PoolItem(emoji: '🥕', name: 'carrots'),
+  PoolItem(emoji: '🌽', name: 'corn cobs'),
+  PoolItem(emoji: '🥦', name: 'broccoli'),
+  PoolItem(emoji: '🍉', name: 'watermelons'),
+  PoolItem(emoji: '🍐', name: 'pears'),
+  PoolItem(emoji: '🍑', name: 'peaches'),
+  PoolItem(emoji: '🍒', name: 'cherries'),
+  PoolItem(emoji: '🍅', name: 'tomatoes'),
+  PoolItem(emoji: '🥔', name: 'potatoes'),
+  PoolItem(emoji: '🍆', name: 'eggplants'),
+  PoolItem(emoji: '🥒', name: 'cucumbers'),
+  PoolItem(emoji: '🫐', name: 'blueberries'),
+  PoolItem(emoji: '🥝', name: 'kiwis'),
+  PoolItem(emoji: '🍍', name: 'pineapples'),
+  PoolItem(emoji: '🥬', name: 'lettuce'),
 ];
 
 /// The 6 math stations in the Little Math Lab (order: as in raw/math.jsx).
@@ -191,7 +201,7 @@ const List<MathStation> kMathStations = [
   ),
 ];
 
-/// A single math problem: two operands, answer, and 4 choices.
+/// A single math problem: two operands, answer, and choices.
 class MathProblem {
   final int a;
   final int b;
@@ -219,7 +229,7 @@ class MathProblem {
           a == other.a &&
           b == other.b &&
           answer == other.answer &&
-          choices == other.choices &&
+          _listEquals(choices, other.choices) &&
           obj == other.obj;
 
   @override
@@ -227,7 +237,7 @@ class MathProblem {
       a.hashCode ^
       b.hashCode ^
       answer.hashCode ^
-      choices.hashCode ^
+      Object.hashAll(choices) ^
       obj.hashCode;
 }
 
@@ -235,13 +245,21 @@ class MathProblem {
 ///
 /// Uses injected Random for determinism.
 ///
-/// Honors prototype ranges:
+/// Honors prototype ranges (raw/math.jsx):
 /// - add: a+b ≤ 16, both 1–9
 /// - sub: total 2–12, take 1 to total-1, result ≥ 0
 /// - count: 1–12
 /// - compare: a, b 1–12, a ≠ b
 ///
-/// Each problem includes 4 choices (answer + 3 distractors within range).
+/// Pool routing (matches prototype):
+/// - 'zoo' → random animal from kZooAnimals per problem
+/// - 'gems' → random gem from kGems per problem
+/// - 'snack' → random fruit/veggie from kFruitsVeggies per problem
+/// - 'eggs' / 'cookie' / 'morles' → station's fixed obj (prototype uses
+///   theme.obj for sub and compare stations — no pool variation)
+///
+/// Choices: 4 for count/add/sub (answer + 3 near-answer distractors);
+/// compare always uses exactly [0, 1] ("B has more" / "A has more").
 List<MathProblem> genMathProblems(
   MathType type,
   String stationId,
@@ -250,15 +268,24 @@ List<MathProblem> genMathProblems(
 ) {
   final problems = <MathProblem>[];
 
-  // Select object pool based on station ID.
-  final pool = stationId == 'zoo'
-      ? _kZooAnimalsData
-      : stationId == 'gems'
-          ? _kGemsData
-          : _kFruitsVeggiesData;
+  // Pool stations vary the obj per problem; fixed stations use station.obj.
+  final bool usePool =
+      stationId == 'zoo' || stationId == 'gems' || stationId == 'snack';
+  final List<PoolItem>? pool = usePool
+      ? (stationId == 'zoo'
+          ? kZooAnimals
+          : stationId == 'gems'
+              ? kGems
+              : kFruitsVeggies)
+      : null;
+  final String fixedObj = usePool
+      ? ''
+      : kMathStations.firstWhere((s) => s.id == stationId).obj;
 
   while (problems.length < n) {
-    late int a, b, answer, lo, hi;
+    late int a, b, answer;
+    var lo = 0;
+    var hi = 20;
 
     if (type == MathType.add) {
       // Addition: a + b ≤ 16, both 1–9.
@@ -266,8 +293,6 @@ List<MathProblem> genMathProblems(
       b = 1 + r.nextInt(9);
       if (a + b > 16) continue;
       answer = a + b;
-      lo = 0;
-      hi = 20;
     } else if (type == MathType.sub) {
       // Subtraction: total 2–12, take 1 to total-1.
       final total = 2 + r.nextInt(11);
@@ -275,8 +300,6 @@ List<MathProblem> genMathProblems(
       a = total;
       b = take;
       answer = total - take;
-      lo = 0;
-      hi = 20;
     } else if (type == MathType.count) {
       // Count: 1–12.
       a = 1 + r.nextInt(12);
@@ -284,36 +307,38 @@ List<MathProblem> genMathProblems(
       answer = a;
       lo = 1;
       hi = 12;
-    } else if (type == MathType.compare) {
+    } else {
       // Compare: a, b 1–12, a ≠ b.
       a = 1 + r.nextInt(12);
       b = 1 + r.nextInt(12);
       if (a == b) continue;
-      answer = a > b ? 1 : 0; // 1 for "a is more", 0 for "b is more"
-      lo = 1;
-      hi = 12;
+      answer = a > b ? 1 : 0; // 1 = "A has more", 0 = "B has more"
     }
 
-    // Build 4 choices for count/add/sub, or 2 for compare.
-    final choiceCount = type == MathType.compare ? 2 : 4;
-    final choiceSet = <int>{answer};
-    // Prefer near-answer distractors (offset [-2, +2]); after a bounded
-    // number of attempts fall back to uniform draws in [lo, hi] — near the
-    // range edges (e.g. count answer 1 or 12) fewer than 3 near-offsets
-    // exist and the near-only loop would never terminate.
-    var attempts = 0;
-    while (choiceSet.length < choiceCount) {
-      final distractor = attempts++ < 24
-          ? answer + (r.nextInt(5) - 2) // offset [-2, +2]
-          : lo + r.nextInt(hi - lo + 1);
-      if (distractor >= lo && distractor <= hi && distractor != answer) {
-        choiceSet.add(distractor);
+    // Build choices.
+    // Compare always uses [0, 1] (the only valid answers); skip distractor
+    // loop entirely — lo=1 would make 0 unreachable as a distractor.
+    // For count/add/sub: 4 choices via bounded near-answer distractors with
+    // uniform-fallback after 24 attempts to prevent starvation near range edges.
+    List<int> choices;
+    if (type == MathType.compare) {
+      choices = [0, 1];
+    } else {
+      final choiceSet = <int>{answer};
+      var attempts = 0;
+      while (choiceSet.length < 4) {
+        final distractor = attempts++ < 24
+            ? answer + (r.nextInt(5) - 2) // near-answer offset [-2, +2]
+            : lo + r.nextInt(hi - lo + 1); // uniform fallback in [lo, hi]
+        if (distractor >= lo && distractor <= hi && distractor != answer) {
+          choiceSet.add(distractor);
+        }
       }
+      choices = choiceSet.toList()..sort();
     }
-    final choices = choiceSet.toList()..sort();
 
-    // Pick a random object from the pool.
-    final obj = pool[r.nextInt(pool.length)].emoji;
+    // Pick object: pool stations draw randomly; fixed stations use station obj.
+    final obj = usePool ? pool![r.nextInt(pool.length)].emoji : fixedObj;
 
     problems.add(MathProblem(
       a: a,

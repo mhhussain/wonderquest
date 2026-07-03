@@ -283,6 +283,28 @@ void main() {
           expect(p.choices.length, equals(2));
         }
       });
+
+      test('compare choices are always exactly [0, 1]', () {
+        final problems =
+            genMathProblems(MathType.compare, 'morles', 100, Random(42));
+        for (final p in problems) {
+          expect(p.choices, equals([0, 1]));
+        }
+      });
+    });
+
+    group('Public object pool constants', () {
+      test('kZooAnimals has 18 entries', () {
+        expect(kZooAnimals.length, equals(18));
+      });
+
+      test('kGems has 12 entries', () {
+        expect(kGems.length, equals(12));
+      });
+
+      test('kFruitsVeggies has 20 entries', () {
+        expect(kFruitsVeggies.length, equals(20));
+      });
     });
 
     group('Math station with object pools', () {
@@ -321,18 +343,35 @@ void main() {
           expect(foodEmoji, contains(p.obj));
         }
       });
+
+      // Fixed-obj stations: sub and compare always use their station's obj.
+      test('eggs station problems all have obj 🥚', () {
+        final problems =
+            genMathProblems(MathType.sub, 'eggs', 50, Random(42));
+        for (final p in problems) {
+          expect(p.obj, equals('🥚'));
+        }
+      });
+
+      test('cookie station problems all have obj 🍪', () {
+        final problems =
+            genMathProblems(MathType.sub, 'cookie', 50, Random(42));
+        for (final p in problems) {
+          expect(p.obj, equals('🍪'));
+        }
+      });
     });
 
     group('MathProblem equality and hashing', () {
       test('two MathProblems with same values are equal', () {
-        final p1 = const MathProblem(
+        const p1 = MathProblem(
           a: 2,
           b: 3,
           answer: 5,
           choices: [4, 5, 6, 7],
           obj: '🍎',
         );
-        final p2 = const MathProblem(
+        const p2 = MathProblem(
           a: 2,
           b: 3,
           answer: 5,
@@ -342,8 +381,18 @@ void main() {
         expect(p1, equals(p2));
       });
 
+      test('MathProblem equality works with runtime-built (non-const) lists', () {
+        // Non-const lists are distinct objects; referential == would fail here.
+        final c1 = [4, 5, 6, 7];
+        final c2 = [4, 5, 6, 7];
+        final p1 = MathProblem(a: 2, b: 3, answer: 5, choices: c1, obj: '🍎');
+        final p2 = MathProblem(a: 2, b: 3, answer: 5, choices: c2, obj: '🍎');
+        expect(p1, equals(p2));
+        expect(p1.hashCode, equals(p2.hashCode));
+      });
+
       test('MathProblem hashCode is consistent', () {
-        final p = const MathProblem(
+        const p = MathProblem(
           a: 2,
           b: 3,
           answer: 5,
