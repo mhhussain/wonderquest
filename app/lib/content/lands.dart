@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/lands/letter_adventure/letter_adventure_screen.dart';
+import '../features/lands/math_lab/math_lab_screen.dart';
 import '../features/lands/number_kingdom/number_kingdom_screen.dart';
 import '../theme/wq_colors.dart';
 
@@ -121,7 +122,7 @@ final List<Land> kLands = [
     progressKey: 'number',
     builder: (_) => const NumberKingdomScreen(),
   ),
-  const Land(
+  Land(
     id: 'math',
     title: 'Little Math Lab',
     sub: 'Add & take away',
@@ -129,6 +130,7 @@ final List<Land> kLands = [
     color: WqColors.green,
     playable: true,
     progressKey: 'math',
+    builder: (_) => const MathLabScreen(),
   ),
   const Land(
     id: 'animal',
