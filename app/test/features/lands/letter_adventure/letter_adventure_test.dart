@@ -9,6 +9,7 @@ import 'package:wonder_quest/core/audio/tts_service.dart';
 import 'package:wonder_quest/core/persistence/save_data.dart';
 import 'package:wonder_quest/core/persistence/save_file.dart';
 import 'package:wonder_quest/core/save_controller.dart';
+import 'package:wonder_quest/features/lands/letter_adventure/big_letters_game.dart';
 import 'package:wonder_quest/features/lands/letter_adventure/match_letters_game.dart';
 import 'package:wonder_quest/features/lands/letter_adventure/reading_words_game.dart';
 import 'package:wonder_quest/features/lands/letter_adventure/trace_letters_game.dart';
@@ -465,6 +466,131 @@ void main() {
           isTrue,
           reason: 'advance must fire after BOTH canvases are covered',
         );
+      },
+    );
+  });
+
+  // ── Test 5: Big Letters mastery via widget path ───────────────────────────
+  group('LetterTraceQuestion (mastery tracking)', () {
+    // Both tests use debugGuidePoints at Offset(50, 50) so that a 40 px
+    // horizontal pan (via _panCanvas) covers the guide point and fires the
+    // real onCovered → setLetterLearning/setLetterMastered path without
+    // bypassing the widget dispatch.
+
+    testWidgets(
+      'tracing on fresh save adds letter to lettersLearning',
+      (tester) async {
+        final store = _MemStore();
+        final fakeTts = _FakeTtsBackend();
+
+        final letterA = kEnglishLetters.firstWhere((e) => e.u == 'A');
+
+        await tester.pumpWidget(
+          _harness(
+            store: store,
+            fakeTts: fakeTts,
+            child: LetterTraceQuestion(
+              letter: letterA,
+              advance: () {},
+              debugGuidePoints: const [Offset(50, 50)],
+            ),
+          ),
+        );
+        await _settle(tester);
+
+        // Verify 'A' is not yet in learning.
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(LetterTraceQuestion)),
+        );
+        await container.read(saveControllerProvider.future);
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersLearning,
+          isNot(contains('A')),
+        );
+
+        // Pan the canvas — fires the real _onCovered branch.
+        await _panCanvas(tester, find.byKey(const ValueKey('trace-0')));
+
+        // Settle microtasks so the unawaited setLetterLearning completes.
+        await tester.pump();
+        await tester.pump();
+
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersLearning,
+          contains('A'),
+          reason: 'A must be in lettersLearning after first trace',
+        );
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersMastered,
+          isNot(contains('A')),
+          reason: 'A must NOT be mastered after only one trace',
+        );
+
+        // Drain the 1.5 s advance timer from _onCovered.
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'tracing when already in lettersLearning promotes to lettersMastered',
+      (tester) async {
+        final store = _MemStore();
+        final fakeTts = _FakeTtsBackend();
+
+        // Pre-seed: 'A' is already in lettersLearning (traced once before).
+        await store.save(
+          SaveData.initial(profileId: 'mastery-test').copyWith(
+            lettersLearning: const ['A'],
+          ),
+        );
+
+        final letterA = kEnglishLetters.firstWhere((e) => e.u == 'A');
+
+        await tester.pumpWidget(
+          _harness(
+            store: store,
+            fakeTts: fakeTts,
+            child: LetterTraceQuestion(
+              letter: letterA,
+              advance: () {},
+              debugGuidePoints: const [Offset(50, 50)],
+            ),
+          ),
+        );
+        await _settle(tester);
+
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(LetterTraceQuestion)),
+        );
+        await container.read(saveControllerProvider.future);
+
+        // Confirm seed state.
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersLearning,
+          contains('A'),
+        );
+
+        // Pan the canvas — since 'A' is already in learning, the widget
+        // calls setLetterMastered via the real _onCovered branch.
+        await _panCanvas(tester, find.byKey(const ValueKey('trace-0')));
+
+        // Settle microtasks so the unawaited setLetterMastered completes.
+        await tester.pump();
+        await tester.pump();
+
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersMastered,
+          contains('A'),
+          reason: 'A must be in lettersMastered after second trace',
+        );
+        expect(
+          container.read(saveControllerProvider).requireValue.lettersLearning,
+          isNot(contains('A')),
+          reason: 'A must be removed from lettersLearning when mastered',
+        );
+
+        // Drain the 1.5 s advance timer from _onCovered.
+        await tester.pump(const Duration(milliseconds: 1600));
       },
     );
   });

@@ -116,10 +116,16 @@ class LetterTraceQuestion extends ConsumerStatefulWidget {
     super.key,
     required this.letter,
     required this.advance,
+    @visibleForTesting this.debugGuidePoints,
   });
 
   final EnglishLetter letter;
   final VoidCallback advance;
+
+  /// Pre-computed guide points injected into the [TraceCanvas].
+  /// Used in widget tests to bypass raster extraction.
+  @visibleForTesting
+  final List<Offset>? debugGuidePoints;
 
   @override
   ConsumerState<LetterTraceQuestion> createState() =>
@@ -199,6 +205,8 @@ class _LetterTraceQuestionState extends ConsumerState<LetterTraceQuestion> {
                   key: ValueKey('trace-$_resetKey'),
                   glyph: letter.u,
                   onCovered: _onCovered,
+                  // ignore: invalid_use_of_visible_for_testing_member
+                  debugGuidePoints: widget.debugGuidePoints,
                 ),
               ),
             ),
