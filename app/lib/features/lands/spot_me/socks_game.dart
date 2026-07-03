@@ -62,7 +62,12 @@ bool socksMatch(SockItem a, SockItem b, SockLevel level) {
 ///
 /// Items are shuffled so the grid order is random.
 List<SockItem> generateSocks(SockLevel level, Random random) {
-  final n = level.pairs;
+  // Clamp to the number of distinguishable visual variants for this level.
+  // Pattern level has kSockPatterns.length (4) distinct values; requesting 5
+  // pairs would wrap around and produce duplicate patterns, soft-locking play.
+  final n = level.by == 'pattern'
+      ? min(level.pairs, kSockPatterns.length)
+      : level.pairs;
 
   final colors = List<Color>.from(kSockColors)..shuffle(random);
   final patterns = List<String>.from(kSockPatterns)..shuffle(random);
@@ -170,7 +175,8 @@ class _SocksScreenState extends ConsumerState<SocksScreen> {
     if (socksMatch(firstSock, sock, _level) &&
         firstSock.pairId != sock.pairId) {
       // This shouldn't normally happen (pairs are generated correctly) but
-      // guard against content bugs.
+      // guard against content bugs — play wrong sound so child gets feedback.
+      await sfx.play(Sfx.wrong);
       setState(() => _selectedSlot = null);
       return;
     }
@@ -185,7 +191,7 @@ class _SocksScreenState extends ConsumerState<SocksScreen> {
         _animating = false;
       });
 
-      if (_foundPairs.length == _level.pairs) {
+      if (_foundPairs.length == _socks.length ~/ 2) {
         await _onLevelComplete();
       }
     } else {
@@ -290,7 +296,7 @@ class _SocksScreenState extends ConsumerState<SocksScreen> {
 
             // Progress indicator.
             Text(
-              '${_foundPairs.length} / ${level.pairs} pairs found',
+              '${_foundPairs.length} / ${_socks.length ~/ 2} pairs found',
               textAlign: TextAlign.center,
               style: WqTheme.headingStyle(15)
                   .copyWith(color: WqColors.teal),
@@ -433,8 +439,7 @@ class _SockPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final fill = Paint()..color = color;
     final accent = Paint()
-      ..color = color.withValues(alpha: 0.5)
-        .computeLuminance() > 0.4
+      ..color = color.computeLuminance() > 0.4
           ? color.withValues(alpha: 0.35)
           : Colors.white.withValues(alpha: 0.35);
 

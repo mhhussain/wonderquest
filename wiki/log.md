@@ -23,3 +23,6 @@ Detailed 35-task implementation plan for Wonder Quest v1 created at `../docs/sup
 
 ## [2026-07-01] spike | Arabic TTS spike screen implemented (Task 3) — PENDING DEVICE VERIFICATION
 Created `app/lib/features/spike/tts_spike_screen.dart`: a debug-only screen (reachable from placeholder home) with buttons to list `ar-*` voices via `FlutterTts.getVoices`, speak `ب` and `بَطَّة` at rate 0.4 using the first available `ar-*` locale, and speak an English fallback. Results doc scaffolded at `wiki/requirements/arabic-tts-spike-result.md` (Status: needs-device-verification). Human must run on a real iPad in airplane mode to complete the go/no-go decision for Task 33 (Hoorof). Flutter analyze: 0 issues. Tests: all green.
+
+## [2026-07-03] divergence | Shape Safari uses emoji shapes (prototype behavior) instead of plan-suggested CustomPaint geometry
+The plan brief suggested drawing shapes with CustomPaint for crisp geometry, but the Flutter implementation follows prototype behavior (kShapeRounds uses emoji characters rendered via SpotScene scatter), keeping emoji-as-art consistent with every other detective game.

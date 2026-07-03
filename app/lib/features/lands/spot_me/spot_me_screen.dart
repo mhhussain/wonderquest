@@ -20,7 +20,12 @@ import 'spot_difference_game.dart';
 /// exited (no widgets are watching it).
 class _SpotMeSessionNotifier extends Notifier<int> {
   @override
-  int build() => 0;
+  int build() {
+    // Keep the notifier alive for the full app session even though no widget
+    // holds a persistent watch subscription (games use ref.read).
+    ref.keepAlive();
+    return 0;
+  }
 
   /// Increments the session count and returns the new value.
   int increment() {

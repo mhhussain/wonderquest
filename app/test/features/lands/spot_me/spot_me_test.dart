@@ -1,12 +1,14 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonder_quest/content/spot_scenes_content.dart';
 import 'package:wonder_quest/domain/spot_scene_engine.dart';
 import 'package:wonder_quest/features/lands/spot_me/detective_game.dart';
 import 'package:wonder_quest/features/lands/spot_me/socks_game.dart';
 import 'package:wonder_quest/features/lands/spot_me/spot_difference_game.dart';
+import 'package:wonder_quest/features/lands/spot_me/spot_me_screen.dart';
 
 void main() {
   // ── Spot the Difference ───────────────────────────────────────────────────
@@ -238,7 +240,7 @@ void main() {
 
     // Level 2 — both (the key behavioral requirement)
     test(
-      'level 3 (both): requires same color AND same pattern',
+      'level 2 (both): requires same color AND same pattern',
       () {
         // Same color, same pattern → match.
         expect(socksMatch(redSolid, redSolid, levelBoth), isTrue);
@@ -315,5 +317,63 @@ void main() {
         }
       }
     });
+
+    // Fix 4: level-1 (pattern) pairwise distinguishability
+    test(
+      'generateSocks level 1 (pattern): no two different pairIds share '
+      'identical color and pattern',
+      () {
+        // Run over multiple seeds to guard against lucky shuffles.
+        for (final seed in [1, 7, 42, 99, 123]) {
+          final socks = generateSocks(kSockLevels[1], Random(seed));
+          // Collect one representative SockItem per pairId.
+          final byPair = <int, SockItem>{};
+          for (final s in socks) {
+            byPair.putIfAbsent(s.pairId, () => s);
+          }
+          final reps = byPair.values.toList();
+
+          for (var i = 0; i < reps.length; i++) {
+            for (var j = i + 1; j < reps.length; j++) {
+              final a = reps[i];
+              final b = reps[j];
+              final sameVisual =
+                  a.color == b.color && a.pattern == b.pattern;
+              expect(
+                sameVisual,
+                isFalse,
+                reason: 'seed $seed: pairs ${a.pairId} and ${b.pairId} '
+                    'share color=${a.color} pattern=${a.pattern} — '
+                    'visually identical socks soft-lock the level',
+              );
+            }
+          }
+        }
+      },
+    );
+  });
+
+  // ── Session count persistence (Fix 1) ─────────────────────────────────────
+
+  group('spotMeSessionCountProvider', () {
+    test(
+      'count survives re-reads and crosses the 3-game title threshold',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        // Increment 3 times; keepAlive() must hold the notifier between reads.
+        container.read(spotMeSessionCountProvider.notifier).increment();
+        container.read(spotMeSessionCountProvider.notifier).increment();
+        final count =
+            container.read(spotMeSessionCountProvider.notifier).increment();
+
+        expect(count, equals(3));
+        // State persists across a re-read (no disposal between games).
+        expect(container.read(spotMeSessionCountProvider), equals(3));
+        // The 3-game threshold maps to the second detective title.
+        expect(detectiveTitleForCount(count), equals('Rookie Spotter'));
+      },
+    );
   });
 }
