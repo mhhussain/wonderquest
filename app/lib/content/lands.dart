@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/lands/animal_planet/animal_planet_screen.dart';
+import '../features/lands/around_the_world/around_the_world_screen.dart';
 import '../features/lands/letter_adventure/letter_adventure_screen.dart';
 import '../features/lands/math_lab/math_lab_screen.dart';
 import '../features/lands/number_kingdom/number_kingdom_screen.dart';
@@ -144,7 +145,7 @@ final List<Land> kLands = [
     progressKey: 'animal',
     builder: (_) => const AnimalPlanetScreen(),
   ),
-  const Land(
+  Land(
     id: 'world',
     title: 'Around the World',
     sub: 'Continents',
@@ -152,6 +153,7 @@ final List<Land> kLands = [
     color: WqColors.sky,
     playable: true,
     progressKey: 'world',
+    builder: (_) => const AroundTheWorldScreen(),
   ),
   Land(
     id: 'find',
