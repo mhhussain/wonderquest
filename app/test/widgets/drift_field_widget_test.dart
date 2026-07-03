@@ -48,9 +48,12 @@ void main() {
     testWidgets(
       'renders mascot and item glyphs after initialisation',
       (tester) async {
+        // Seeded Random: an unseeded fallback occasionally spawns the item
+        // within collect radius of the mascot, collecting it on tick 1.
         await tester.pumpWidget(_wrap(
           itemChars: const ['🐋'],
           onAllCollected: () {},
+          random: Random(2),
         ));
 
         // post-frame callback → engine init, ticker.start()
@@ -128,9 +131,12 @@ void main() {
     testWidgets(
       'count badge starts at 0/N',
       (tester) async {
+        // Seeded Random: an unseeded fallback occasionally spawns an item
+        // within collect radius of the mascot, making the badge read 1/3.
         await tester.pumpWidget(_wrap(
           itemChars: const ['🐋', '🦑', '🐙'],
           onAllCollected: () {},
+          random: Random(2),
         ));
 
         // post-frame → engine init + rebuild.
