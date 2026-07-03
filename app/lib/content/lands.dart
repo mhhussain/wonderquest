@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../features/lands/letter_adventure/letter_adventure_screen.dart';
 import '../features/lands/math_lab/math_lab_screen.dart';
 import '../features/lands/number_kingdom/number_kingdom_screen.dart';
+import '../features/lands/spot_me/spot_me_screen.dart';
 import '../theme/wq_colors.dart';
 
 /// A single land entry in the 13-land Expedition Map registry.
@@ -150,7 +151,7 @@ final List<Land> kLands = [
     playable: true,
     progressKey: 'world',
   ),
-  const Land(
+  Land(
     id: 'find',
     title: 'Spot Me If You Can',
     sub: 'Hidden objects',
@@ -158,6 +159,7 @@ final List<Land> kLands = [
     color: WqColors.yellow,
     playable: true,
     progressKey: 'find',
+    builder: (_) => const SpotMeScreen(),
   ),
   // ── Locked lands ──────────────────────────────────────────────────────────
   const Land(
