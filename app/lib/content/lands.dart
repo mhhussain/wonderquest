@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/lands/letter_adventure/letter_adventure_screen.dart';
 import '../theme/wq_colors.dart';
 
 /// A single land entry in the 13-land Expedition Map registry.
@@ -90,7 +91,7 @@ const kDinos = <DinoDef>[
 /// [ExpeditionMapScreen] falls back to a placeholder "Coming in a later task"
 /// screen.
 final List<Land> kLands = [
-  const Land(
+  Land(
     id: 'letter',
     title: 'Letter Adventure',
     sub: 'Aa Bb Cc',
@@ -98,6 +99,7 @@ final List<Land> kLands = [
     color: WqColors.orange,
     playable: true,
     progressKey: 'letter',
+    builder: (_) => const LetterAdventureScreen(),
   ),
   const Land(
     id: 'hoorof',

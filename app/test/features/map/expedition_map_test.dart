@@ -99,20 +99,20 @@ void main() {
       expect(find.byKey(const Key('my-stuff-btn')), findsOneWidget);
     });
 
-    // ── Test 3: tapping a playable card navigates to placeholder screen ──────
+    // ── Test 3: tapping a playable card navigates to its screen ─────────────
 
-    testWidgets('tapping a playable card pushes the placeholder route',
+    testWidgets('tapping a playable card pushes the land route',
         (tester) async {
       await tester.pumpWidget(_mapApp(store));
       await tester.pump();
       await tester.pump();
 
-      // Tap the 'letter' land card (first playable, no builder yet → placeholder).
+      // Tap the 'letter' land card — now has a real LetterAdventureScreen.
       await tester.tap(find.byKey(const Key('land-card-letter')));
       await tester.pumpAndSettle();
 
-      // Placeholder screen should be on the navigator stack.
-      expect(find.text('Coming in a later task'), findsOneWidget);
+      // LetterAdventureScreen shows the 5-game picker.
+      expect(find.text('Pick a game to play!'), findsOneWidget);
 
       // Map's My Stuff button should no longer be visible.
       expect(find.byKey(const Key('my-stuff-btn')), findsNothing);

@@ -29,6 +29,9 @@ class Art {
     'land-trace': '✏️',
     'land-pattern': '🔺',
     'land-reading': '📖',
+    // Letter Adventure game-picker icons
+    'abc': '🐣',
+    'magnet': '🧲',
     // Collections UI
     'bag': '🎒',
     'sparkle': '✨',
