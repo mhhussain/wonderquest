@@ -16,7 +16,7 @@ import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
 
 /// Pre-computed ordered pool for the match game (kMatchOrder → EnglishLetter).
-List<EnglishLetter> get _matchPool => kMatchOrder
+final _matchPool = kMatchOrder
     .map((u) => kEnglishLetters.firstWhere((e) => e.u == u))
     .toList();
 
@@ -193,6 +193,9 @@ class _MatchQuestionState extends ConsumerState<MatchQuestion> {
       if (mounted) widget.advance();
     } else {
       unawaited(ref.read(sfxServiceProvider).play(Sfx.wrong));
+      unawaited(
+        ref.read(ttsServiceProvider).speak('Try again!', rate: 0.95),
+      );
       await Future<void>.delayed(const Duration(milliseconds: 520));
       if (mounted) {
         setState(() {

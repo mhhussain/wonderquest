@@ -122,10 +122,22 @@ class LetterPairTraceQuestion extends ConsumerStatefulWidget {
     super.key,
     required this.letter,
     required this.advance,
+    @visibleForTesting this.debugUpperGuidePoints,
+    @visibleForTesting this.debugLowerGuidePoints,
   });
 
   final EnglishLetter letter;
   final VoidCallback advance;
+
+  /// Pre-computed guide points injected into the uppercase [TraceCanvas].
+  /// Used in widget tests to bypass raster extraction.
+  @visibleForTesting
+  final List<Offset>? debugUpperGuidePoints;
+
+  /// Pre-computed guide points injected into the lowercase [TraceCanvas].
+  /// Used in widget tests to bypass raster extraction.
+  @visibleForTesting
+  final List<Offset>? debugLowerGuidePoints;
 
   @override
   ConsumerState<LetterPairTraceQuestion> createState() =>
@@ -154,6 +166,23 @@ class _LetterPairTraceQuestionState
   Future<void> _checkBothCovered() async {
     if (!_upperCovered || !_lowerCovered || _advanced) return;
     _advanced = true;
+
+    // Update letter learning/mastery (mirrors big_letters_game.dart _onCovered).
+    final save = ref.read(saveControllerProvider).value;
+    final learning = save?.lettersLearning ?? const <String>[];
+    if (learning.contains(widget.letter.u)) {
+      unawaited(
+        ref
+            .read(saveControllerProvider.notifier)
+            .setLetterMastered(widget.letter.u),
+      );
+    } else {
+      unawaited(
+        ref
+            .read(saveControllerProvider.notifier)
+            .setLetterLearning(widget.letter.u),
+      );
+    }
 
     unawaited(
       ref
@@ -215,6 +244,8 @@ class _LetterPairTraceQuestionState
                           key: ValueKey('upper-$_resetKey'),
                           glyph: letter.u,
                           onCovered: _onUpperCovered,
+                          // ignore: invalid_use_of_visible_for_testing_member
+                          debugGuidePoints: widget.debugUpperGuidePoints,
                         ),
                       ),
                     ],
@@ -248,6 +279,8 @@ class _LetterPairTraceQuestionState
                           key: ValueKey('lower-$_resetKey'),
                           glyph: letter.l,
                           onCovered: _onLowerCovered,
+                          // ignore: invalid_use_of_visible_for_testing_member
+                          debugGuidePoints: widget.debugLowerGuidePoints,
                         ),
                       ),
                     ],

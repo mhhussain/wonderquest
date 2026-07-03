@@ -58,7 +58,7 @@ class _SmallLettersScreenState extends ConsumerState<SmallLettersScreen> {
           stars: 5,
           xp: 30,
           egg: true,
-          sticker: 'abc',
+          sticker: '🐣',
           progressKey: 'letter',
           progressTo: 65,
         ),

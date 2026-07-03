@@ -9,9 +9,9 @@ import 'package:wonder_quest/core/audio/tts_service.dart';
 import 'package:wonder_quest/core/persistence/save_data.dart';
 import 'package:wonder_quest/core/persistence/save_file.dart';
 import 'package:wonder_quest/core/save_controller.dart';
-import 'package:wonder_quest/features/lands/letter_adventure/big_letters_game.dart';
 import 'package:wonder_quest/features/lands/letter_adventure/match_letters_game.dart';
 import 'package:wonder_quest/features/lands/letter_adventure/reading_words_game.dart';
+import 'package:wonder_quest/features/lands/letter_adventure/trace_letters_game.dart';
 
 // ---------------------------------------------------------------------------
 // Test doubles
@@ -91,6 +91,25 @@ Widget _harness({
 /// Pumps twice to settle [AsyncNotifier.build] (microtask-based).
 Future<void> _settle(WidgetTester tester) async {
   await tester.pump();
+  await tester.pump();
+}
+
+/// Simulates a pan gesture across a [TraceCanvas] to fire its [onCovered]
+/// callback via the real widget path.
+///
+/// The guide point must be at [Offset(50, 50)] in local canvas coords
+/// (i.e., [debugGuidePoints] was set to `[Offset(50, 50)]`). The 40 px
+/// horizontal sweep exceeds [kTouchSlop] (18 px) and passes within the
+/// 28 px tolerance of the guide point.
+Future<void> _panCanvas(WidgetTester tester, Finder canvasFinder) async {
+  final topLeft = tester.getTopLeft(canvasFinder);
+  final gesture = await tester.startGesture(
+    Offset(topLeft.dx + 30, topLeft.dy + 50),
+  );
+  await tester.pump();
+  await gesture.moveTo(Offset(topLeft.dx + 70, topLeft.dy + 50));
+  await tester.pump();
+  await gesture.up();
   await tester.pump();
 }
 
@@ -277,8 +296,13 @@ void main() {
     );
   });
 
-  // ── Test 3: Big letters mastery after 2 games ──────────────────────────────
-  group('LetterTraceQuestion (mastery tracking)', () {
+  // ── Test 3: Trace Letters mastery via widget path ──────────────────────────
+  group('LetterPairTraceQuestion (mastery tracking)', () {
+    // Both tests use debugGuidePoints at Offset(50, 50) so that a 40 px
+    // horizontal pan (via _panCanvas) covers the guide point and fires the
+    // real onCovered → _checkBothCovered → setLetterLearning/setLetterMastered
+    // path without bypassing the widget dispatch.
+
     testWidgets(
       'tracing A in one game adds it to lettersLearning',
       (tester) async {
@@ -291,27 +315,19 @@ void main() {
           _harness(
             store: store,
             fakeTts: fakeTts,
-            child: LetterTraceQuestion(
+            child: LetterPairTraceQuestion(
               letter: letterA,
               advance: () {},
+              debugUpperGuidePoints: const [Offset(50, 50)],
+              debugLowerGuidePoints: const [Offset(50, 50)],
             ),
           ),
         );
         await _settle(tester);
 
-        // Use debugGuidePoints via the TraceCanvas test API.
-        // We can't easily test the full trace here without a raster.
-        // Instead: call onCovered directly by finding the TraceCanvas's widget.
-        // Since onCovered is not publicly accessible, we call _onCovered by
-        // triggering a pan gesture through the TraceCanvas using debugGuidePoints.
-        //
-        // For this behavioral test, directly inspect state via the Provider.
-        // We test mastery logic by calling setLetterLearning / setLetterMastered
-        // on the SaveController and verifying state transitions.
-
-        // First, verify that 'A' is NOT yet in learning.
+        // Verify 'A' is not yet in learning.
         final container = ProviderScope.containerOf(
-          tester.element(find.byType(LetterTraceQuestion)),
+          tester.element(find.byType(LetterPairTraceQuestion)),
         );
         await container.read(saveControllerProvider.future);
         expect(
@@ -319,10 +335,11 @@ void main() {
           isNot(contains('A')),
         );
 
-        // Simulate first trace: add to learning.
-        await container
-            .read(saveControllerProvider.notifier)
-            .setLetterLearning('A');
+        // Pan both canvases — fires the real _checkBothCovered branch.
+        await _panCanvas(tester, find.byKey(const ValueKey('upper-0')));
+        await _panCanvas(tester, find.byKey(const ValueKey('lower-0')));
+
+        // Settle microtasks so the unawaited setLetterLearning completes.
         await tester.pump();
         await tester.pump();
 
@@ -336,6 +353,9 @@ void main() {
           isNot(contains('A')),
           reason: 'A must NOT be mastered after only one trace',
         );
+
+        // Drain the 1.5 s advance timer from _checkBothCovered.
+        await tester.pump(const Duration(milliseconds: 1600));
       },
     );
 
@@ -345,7 +365,7 @@ void main() {
         final store = _MemStore();
         final fakeTts = _FakeTtsBackend();
 
-        // Pre-seed: 'A' is already in lettersLearning (traced in game 1).
+        // Pre-seed: 'A' is already in lettersLearning (traced once before).
         await store.save(
           SaveData.initial(profileId: 'mastery-test').copyWith(
             lettersLearning: const ['A'],
@@ -358,30 +378,33 @@ void main() {
           _harness(
             store: store,
             fakeTts: fakeTts,
-            child: LetterTraceQuestion(
+            child: LetterPairTraceQuestion(
               letter: letterA,
               advance: () {},
+              debugUpperGuidePoints: const [Offset(50, 50)],
+              debugLowerGuidePoints: const [Offset(50, 50)],
             ),
           ),
         );
         await _settle(tester);
 
         final container = ProviderScope.containerOf(
-          tester.element(find.byType(LetterTraceQuestion)),
+          tester.element(find.byType(LetterPairTraceQuestion)),
         );
         await container.read(saveControllerProvider.future);
 
-        // Confirm seed state: 'A' is in learning.
+        // Confirm seed state.
         expect(
           container.read(saveControllerProvider).requireValue.lettersLearning,
           contains('A'),
         );
 
-        // Simulate second trace: since 'A' is already in learning,
-        // the widget calls setLetterMastered. We verify the logic directly.
-        await container
-            .read(saveControllerProvider.notifier)
-            .setLetterMastered('A');
+        // Pan both canvases — since 'A' is already in learning, the widget
+        // calls setLetterMastered via the real _checkBothCovered branch.
+        await _panCanvas(tester, find.byKey(const ValueKey('upper-0')));
+        await _panCanvas(tester, find.byKey(const ValueKey('lower-0')));
+
+        // Settle microtasks so the unawaited setLetterMastered completes.
         await tester.pump();
         await tester.pump();
 
@@ -394,6 +417,53 @@ void main() {
           container.read(saveControllerProvider).requireValue.lettersLearning,
           isNot(contains('A')),
           reason: 'A must be removed from lettersLearning when mastered',
+        );
+
+        // Drain the 1.5 s advance timer from _checkBothCovered.
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    // ── Test 4: Dual-coverage gate ────────────────────────────────────────────
+    testWidgets(
+      'advance fires only after BOTH canvases are covered',
+      (tester) async {
+        final store = _MemStore();
+        final fakeTts = _FakeTtsBackend();
+        var advanced = false;
+
+        final letterA = kEnglishLetters.firstWhere((e) => e.u == 'A');
+
+        await tester.pumpWidget(
+          _harness(
+            store: store,
+            fakeTts: fakeTts,
+            child: LetterPairTraceQuestion(
+              letter: letterA,
+              advance: () => advanced = true,
+              debugUpperGuidePoints: const [Offset(50, 50)],
+              debugLowerGuidePoints: const [Offset(50, 50)],
+            ),
+          ),
+        );
+        await _settle(tester);
+
+        // Cover upper canvas only — advance must NOT fire.
+        await _panCanvas(tester, find.byKey(const ValueKey('upper-0')));
+        await tester.pump();
+        expect(
+          advanced,
+          isFalse,
+          reason: 'advance must not fire with only upper canvas covered',
+        );
+
+        // Cover lower canvas — now both are covered; advance fires after 1.5 s.
+        await _panCanvas(tester, find.byKey(const ValueKey('lower-0')));
+        await tester.pump(const Duration(milliseconds: 1600));
+        expect(
+          advanced,
+          isTrue,
+          reason: 'advance must fire after BOTH canvases are covered',
         );
       },
     );
