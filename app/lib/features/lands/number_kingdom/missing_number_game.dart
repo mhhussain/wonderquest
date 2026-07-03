@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/numbers_content.dart';
+import '../../../core/art.dart';
 import '../../../core/audio/sfx_service.dart';
 import '../../../core/audio/tts_service.dart';
 import '../../../core/save_controller.dart';
@@ -76,7 +77,7 @@ class _MissingNumberScreenState extends ConsumerState<MissingNumberScreen> {
           },
         ),
         title: Text(
-          'Missing Number \u{1F9EE}',
+          'Missing Number ${Art.emoji('abacus')}',
           style: WqTheme.headingStyle(22),
         ),
       ),
@@ -159,6 +160,12 @@ class _MissingNumberQuestionState
       unawaited(
         ref.read(ttsServiceProvider).speak('$n! Perfect!', rate: 0.92),
       );
+      // Update number mastery.
+      unawaited(
+        ref
+            .read(saveControllerProvider.notifier)
+            .setNumberMastered('$n'),
+      );
       await Future<void>.delayed(const Duration(milliseconds: 1000));
       if (mounted) widget.advance();
     } else {
@@ -216,7 +223,7 @@ class _MissingNumberQuestionState
                         color: isGap
                             ? (showAnswer
                                 ? WqColors.green
-                                : const Color(0xFFFFF3E6))
+                                : WqColors.gapBackground)
                             : WqColors.teal,
                         borderRadius: BorderRadius.circular(18),
                         border: isGap && !showAnswer

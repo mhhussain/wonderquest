@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/numbers_content.dart';
+import '../../../core/art.dart';
 import '../../../core/audio/sfx_service.dart';
 import '../../../core/audio/tts_service.dart';
 import '../../../core/save_controller.dart';
@@ -75,7 +76,7 @@ class _CountMatchScreenState extends ConsumerState<CountMatchScreen> {
           },
         ),
         title: Text(
-          'Count & Match \u{1F522}',
+          'Count & Match ${Art.emoji('numbers')}',
           style: WqTheme.headingStyle(22),
         ),
       ),

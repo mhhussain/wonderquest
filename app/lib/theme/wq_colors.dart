@@ -15,6 +15,7 @@ abstract final class WqColors {
   static const background = Color(0xFFFFF8EE);
   static const backgroundAlt = Color(0xFFFFEFD9);
   static const card = Color(0xFFFFFFFF);
+  static const gapBackground = Color(0xFFFFF3E6); // prototype gap-tile tint (raw/number.jsx)
   static const ink = Color(0xFF3A2E2A);
   static const softInk = Color(0xFF6E5D55);
   static const lines = Color(0xFFF0E2CF);

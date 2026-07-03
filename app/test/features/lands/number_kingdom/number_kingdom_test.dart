@@ -284,6 +284,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 1100));
         expect(advanced, isTrue,
             reason: 'advance must fire after correct missing-number choice');
+
+        // Verify mastery was written: reload from store and check numbersMastered.
+        final saved = await store.load();
+        expect(
+          saved.numbersMastered.contains('${round.answer}'),
+          isTrue,
+          reason: 'answered number must be recorded in numbersMastered',
+        );
       },
     );
 

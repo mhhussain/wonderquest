@@ -43,6 +43,9 @@ class Art {
     'dino-tricera': '🐲',
     'dino-ptera': '🐉',
     'dino-raptor': '🦎',
+    // Number Kingdom game icons
+    'numbers': '🔢',
+    'abacus': '🧮',
   };
 
   /// Mascot key for the Rexy dinosaur
