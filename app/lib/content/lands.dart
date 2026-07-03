@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/lands/animal_planet/animal_planet_screen.dart';
 import '../features/lands/letter_adventure/letter_adventure_screen.dart';
 import '../features/lands/math_lab/math_lab_screen.dart';
 import '../features/lands/number_kingdom/number_kingdom_screen.dart';
@@ -133,7 +134,7 @@ final List<Land> kLands = [
     progressKey: 'math',
     builder: (_) => const MathLabScreen(),
   ),
-  const Land(
+  Land(
     id: 'animal',
     title: 'Animal Planet',
     sub: 'Habitats & facts',
@@ -141,6 +142,7 @@ final List<Land> kLands = [
     color: WqColors.grape,
     playable: true,
     progressKey: 'animal',
+    builder: (_) => const AnimalPlanetScreen(),
   ),
   const Land(
     id: 'world',
