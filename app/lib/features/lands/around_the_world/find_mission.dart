@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/world_content.dart';
 import '../../../core/audio/tts_service.dart';
+import '../../../core/save_controller.dart';
 import '../../../domain/reward.dart';
 import '../../../domain/spot_scene_engine.dart';
 import '../../../theme/wq_colors.dart';
@@ -56,7 +57,17 @@ class _FindMissionScreenState extends ConsumerState<FindMissionScreen> {
 
     final c = widget.continent;
 
+    // Grant stamp + wonder card (matches prototype missionDone logic).
+    await ref.read(saveControllerProvider.notifier).visitContinent(c.id);
+    await ref.read(saveControllerProvider.notifier).collectWonderCard(c.id);
+
     if (!mounted) return;
+
+    // Compute progress after marking this continent visited.
+    final visited =
+        ref.read(saveControllerProvider).value?.world.visited ?? {};
+    final progressTo =
+        ((visited.length / 7) * 100).round().clamp(0, 100);
 
     await showRewardModal(
       context,
@@ -67,17 +78,11 @@ class _FindMissionScreenState extends ConsumerState<FindMissionScreen> {
         egg: true,
         sticker: c.badge,
         progressKey: 'world',
-        progressTo: _worldProgress(),
+        progressTo: progressTo,
       ),
     );
 
     if (mounted) widget.onComplete();
-  }
-
-  int _worldProgress() {
-    // Each completed mission is 1/7 of 100 progress points (≈14 each)
-    // This is additive so we use progressTo as a rough target
-    return 14;
   }
 
   @override

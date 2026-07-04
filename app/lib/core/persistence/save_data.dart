@@ -7,6 +7,7 @@ class WorldState {
     required this.visited,
     required this.points,
     required this.discovery,
+    required this.cards,
   });
 
   /// Map of visited locations (locationId -> visited)
@@ -18,6 +19,9 @@ class WorldState {
   /// Map of discovered cards (cardId -> discovered)
   final Map<String, bool> discovery;
 
+  /// Continent IDs whose wonder card has been collected (one per continent).
+  final List<String> cards;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -25,19 +29,22 @@ class WorldState {
           runtimeType == other.runtimeType &&
           mapEquals(visited, other.visited) &&
           points == other.points &&
-          mapEquals(discovery, other.discovery);
+          mapEquals(discovery, other.discovery) &&
+          listEquals(cards, other.cards);
 
   @override
   int get hashCode => Object.hash(
         Object.hashAll(visited.entries.map((e) => Object.hash(e.key, e.value))),
         points,
         Object.hashAll(discovery.entries.map((e) => Object.hash(e.key, e.value))),
+        Object.hashAll(cards),
       );
 
   Map<String, dynamic> toJson() => {
         'visited': visited,
         'points': points,
         'discovery': discovery,
+        'cards': cards,
       };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -45,6 +52,7 @@ class WorldState {
       visited: Map<String, bool>.from(json['visited'] as Map? ?? {}),
       points: (json['points'] as int?) ?? 0,
       discovery: Map<String, bool>.from(json['discovery'] as Map? ?? {}),
+      cards: (json['cards'] as List<dynamic>?)?.cast<String>().toList() ?? [],
     );
   }
 }
@@ -174,6 +182,7 @@ class SaveData {
         visited: {},
         points: 0,
         discovery: {},
+        cards: [],
       ),
     );
   }

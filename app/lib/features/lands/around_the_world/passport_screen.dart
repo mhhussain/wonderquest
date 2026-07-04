@@ -8,47 +8,50 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 
 /// Explorer Passport overlay — 7 stamp slots, discovery points, wonder cards.
-class PassportScreen extends ConsumerWidget {
+class PassportScreen extends ConsumerStatefulWidget {
   const PassportScreen({super.key, required this.onClose});
 
   final VoidCallback onClose;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PassportScreen> createState() => _PassportScreenState();
+}
+
+class _PassportScreenState extends ConsumerState<PassportScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(ttsServiceProvider).speak('Here is your explorer passport!');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final saveAsync = ref.watch(saveControllerProvider);
     final world = saveAsync.value?.world;
     final visited = world?.visited ?? {};
     final discovery = world?.discovery ?? {};
 
-    // Tally collected wonder cards: count unique continents with stamps
+    // Wonder cards: continent IDs collected at mission completion.
+    final wonderCards = world?.cards ?? <String>[];
+
+    // Tally collected stamps
     final stampCount = visited.length;
 
     // Discovery points: 25 per stamp
     final discoveryPoints = stampCount * 25;
 
-    // Wonders: one per continent if visited
-    final wondersCollected = kContinents
-        .where((c) => visited[c.id] == true)
-        .map((c) => kWorldWonders.firstWhere(
-              (w) => w.e == c.badge,
-              orElse: () => WorldWonder(e: c.badge, t: ''),
-            ))
-        .toList();
-
     // All discovery cards collected count
     final cardsCollected =
         discovery.values.where((v) => v == true).length;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(ttsServiceProvider)
-          .speak('Here is your explorer passport!');
-    });
-
     return Material(
       color: Colors.black54,
       child: GestureDetector(
-        onTap: onClose,
+        onTap: widget.onClose,
         child: Center(
           child: GestureDetector(
             onTap: () {}, // prevent close on inner tap
@@ -119,7 +122,7 @@ class PassportScreen extends ConsumerWidget {
                           IconButton(
                             key: const Key('passport-close'),
                             icon: const Icon(Icons.close, color: WqColors.ink),
-                            onPressed: onClose,
+                            onPressed: widget.onClose,
                           ),
                         ],
                       ),
@@ -163,7 +166,7 @@ class PassportScreen extends ConsumerWidget {
                             const SizedBox(height: 12),
                             _WonderCardsGrid(
                               wonders: kWorldWonders,
-                              collected: wondersCollected,
+                              wonderCards: wonderCards,
                               ref: ref,
                             ),
                           ],
@@ -269,12 +272,15 @@ class _StampsGrid extends StatelessWidget {
 class _WonderCardsGrid extends StatelessWidget {
   const _WonderCardsGrid({
     required this.wonders,
-    required this.collected,
+    required this.wonderCards,
     required this.ref,
   });
 
   final List<WorldWonder> wonders;
-  final List<WorldWonder> collected;
+
+  /// Continent IDs whose wonder card has been collected (from world.cards).
+  final List<String> wonderCards;
+
   final WidgetRef ref;
 
   @override
@@ -283,7 +289,14 @@ class _WonderCardsGrid extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: wonders.map((w) {
-        final got = collected.any((c) => c.e == w.e);
+        // Key by continent id (match by continent emoji, not badge).
+        final continentId = kContinents
+            .firstWhere(
+              (c) => c.emoji == w.e,
+              orElse: () => kContinents.first,
+            )
+            .id;
+        final got = wonderCards.contains(continentId);
         return GestureDetector(
           onTap: got ? () => ref.read(ttsServiceProvider).speak(w.t) : null,
           child: SizedBox(

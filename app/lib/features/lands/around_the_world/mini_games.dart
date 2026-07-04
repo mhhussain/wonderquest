@@ -25,12 +25,16 @@ class MiniGameWidget extends ConsumerWidget {
     required this.color,
     required this.color2,
     required this.onWin,
+    @visibleForTesting this.random,
   });
 
   final MiniGameSpec game;
   final Color color;
   final Color color2;
   final VoidCallback onWin;
+
+  /// Seeded [Random] injected in tests to produce a deterministic shuffle.
+  final Random? random;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,7 +44,8 @@ class MiniGameWidget extends ConsumerWidget {
             game: game, color: color, color2: color2, onWin: onWin);
       case MiniGameType.order:
         return _OrderGame(
-            game: game, color: color, color2: color2, onWin: onWin);
+            game: game, color: color, color2: color2, onWin: onWin,
+            random: random);
       case MiniGameType.build:
         return _BuildGame(
             game: game, color: color, color2: color2, onWin: onWin);
@@ -114,12 +119,16 @@ class _OrderGame extends ConsumerStatefulWidget {
     required this.color,
     required this.color2,
     required this.onWin,
+    this.random,
   });
 
   final MiniGameSpec game;
   final Color color;
   final Color color2;
   final VoidCallback onWin;
+
+  /// Seeded [Random] injected in tests for deterministic shuffles.
+  final Random? random;
 
   @override
   ConsumerState<_OrderGame> createState() => _OrderGameState();
@@ -142,7 +151,7 @@ class _OrderGameState extends ConsumerState<_OrderGame> {
         .toList();
     // Sort by 's' to know correct order, then shuffle for display
     _items.sort((a, b) => (a['s'] as int).compareTo(b['s'] as int));
-    _shuffled = List.from(_items)..shuffle(Random());
+    _shuffled = List.from(_items)..shuffle(widget.random ?? Random());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final say = widget.game.params['say'] as String? ?? '';
@@ -167,7 +176,10 @@ class _OrderGameState extends ConsumerState<_OrderGame> {
       });
       if (_nextExpected >= _items.length) {
         _won = true;
-        Future.delayed(const Duration(milliseconds: 600), widget.onWin);
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (!mounted) return;
+          widget.onWin();
+        });
       }
     } else {
       // Wrong order — shake the item
@@ -343,7 +355,10 @@ class _BuildGameState extends ConsumerState<_BuildGame> {
     setState(() => _placed++);
     if (_placed >= _pieces.length) {
       _won = true;
-      Future.delayed(const Duration(milliseconds: 800), widget.onWin);
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        widget.onWin();
+      });
     }
   }
 
@@ -502,7 +517,10 @@ class _DecorateGameState extends ConsumerState<_DecorateGame> {
     setState(() => _placed.add(index));
     if (_placed.length >= _totalSpots) {
       _won = true;
-      Future.delayed(const Duration(milliseconds: 600), widget.onWin);
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        widget.onWin();
+      });
     }
   }
 

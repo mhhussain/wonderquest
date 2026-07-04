@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -332,19 +333,34 @@ void main() {
       }
     });
 
-    testWidgets('order game shows Sfx.wrong on out-of-order tap',
-        (tester) async {
+    testWidgets(
+        'order game: seeded shuffle — wrong-order tap fires Sfx.wrong, '
+        'correct-order tap fires Sfx.pop', (tester) async {
       final store = _MemStore();
       final fakeSfx = _FakeSfxService();
       final fakeTts = _FakeTtsBackend();
 
       bool won = false;
 
-      // Use antarctica-2 card: order game, fish(1)→dolphin(2)→shark(3)→whale(4)
+      // antarctica-2: fish(1)→dolphin(2)→shark(3)→whale(4)
       final orderCard = kDiscoveryCards.firstWhere(
         (c) => c.id == 'antarctica-2',
       );
       expect(orderCard.game.type, equals(MiniGameType.order));
+
+      // Reproduce the widget's shuffle with the same seed so we know
+      // exactly which on-screen index is the correct first tap.
+      const seed = 42;
+      final rawItems = orderCard.game.params['items'] as List<Object>;
+      final sortedItems = rawItems.cast<Map<String, Object>>().toList()
+        ..sort((a, b) => (a['s'] as int).compareTo(b['s'] as int));
+      final shuffled = List<Map<String, Object>>.from(sortedItems)
+        ..shuffle(Random(seed));
+
+      // The correct first tap is whichever shuffled index holds sortedItems[0].
+      final correctIdx = shuffled.indexOf(sortedItems[0]);
+      // Pick a wrong index: any index that is NOT the correct first.
+      final wrongIdx = correctIdx == 0 ? 1 : 0;
 
       await tester.pumpWidget(
         _harness(
@@ -353,6 +369,7 @@ void main() {
             color: Colors.blue,
             color2: Colors.lightBlue,
             onWin: () => won = true,
+            random: Random(seed),
           ),
           store: store,
           fakeSfx: fakeSfx,
@@ -362,37 +379,38 @@ void main() {
       await _settle(tester);
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Tap order-item-3 (last displayed item) — statistically likely out-of-order
-      // since only one item can be "correct first" and there are 4 items.
-      // We tap at least one item that is not the first-in-sequence.
-      final item3 = find.byKey(const Key('order-item-3'));
-      if (tester.any(item3)) {
-        await tester.tap(item3, warnIfMissed: false);
-        // Pump past the 500ms shake timer so it completes cleanly
-        await tester.pump(const Duration(milliseconds: 600));
-      }
+      // ── Wrong tap ──────────────────────────────────────────────────────────
+      await tester.tap(find.byKey(Key('order-item-$wrongIdx')));
+      await tester.pump(const Duration(milliseconds: 600)); // past shake timer
 
-      // Either Sfx.wrong or Sfx.pop should have been recorded
-      // (pop if item-3 happened to be the correct first; wrong otherwise)
-      final sfxCount = fakeSfx.played.length;
       expect(
-        sfxCount,
-        greaterThanOrEqualTo(1),
-        reason: 'A tap on any item should produce sound feedback',
+        fakeSfx.played,
+        contains(Sfx.wrong),
+        reason: 'Tapping out-of-order should fire Sfx.wrong',
       );
-
-      // At this point we haven't tapped all 4 items in order, so the game
-      // must not be won (unless we only tapped one item that happened to be
-      // the ONLY item and count was 1, which can't happen with 4 items).
       expect(won, isFalse,
-          reason: 'Single tap cannot win a 4-item order game');
+          reason: 'Wrong tap must not advance progress to win');
+
+      // ── Correct tap ────────────────────────────────────────────────────────
+      fakeSfx.played.clear();
+      await tester.tap(find.byKey(Key('order-item-$correctIdx')));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        fakeSfx.played,
+        contains(Sfx.pop),
+        reason: 'Tapping the correct first item should fire Sfx.pop',
+      );
     });
   });
 
   // ── Mission stamp grant: exactly once ─────────────────────────────────────
+  // visitContinent is now called at find-mission completion (not on arrival).
 
   group('Mission stamp', () {
-    test('visitContinent grants stamp and persists exactly once', () async {
+    test(
+        'visitContinent grants stamp at mission completion and persists exactly once',
+        () async {
       final store = _MemStore();
       final container = ProviderContainer(
         overrides: [saveStoreProvider.overrideWithValue(store)],
@@ -401,25 +419,95 @@ void main() {
 
       await container.read(saveControllerProvider.future);
 
-      // Simulate mission completion for Australia
+      // Arriving at a continent does NOT call visitContinent.
+      // Stamp is granted at mission completion.
       await container
           .read(saveControllerProvider.notifier)
           .visitContinent('australia');
 
-      final world =
-          container.read(saveControllerProvider).value?.world;
+      final world = container.read(saveControllerProvider).value?.world;
       expect(world?.visited['australia'], isTrue,
           reason: 'Australia stamp should be granted after mission');
 
-      // Call again (duplicate) — should not change count
+      // Duplicate call (idempotent) — should not change count.
       await container
           .read(saveControllerProvider.notifier)
           .visitContinent('australia');
 
-      final world2 =
-          container.read(saveControllerProvider).value?.world;
+      final world2 = container.read(saveControllerProvider).value?.world;
       expect(world2?.visited.length, equals(1),
           reason: 'Stamp count should not increase on duplicate visit');
+    });
+  });
+
+  // ── SaveController: collectWonderCard ─────────────────────────────────────
+
+  group('SaveController.collectWonderCard', () {
+    test('adds continent id to world.cards on mission completion', () async {
+      final store = _MemStore();
+      final container = ProviderContainer(
+        overrides: [saveStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(saveControllerProvider.future);
+
+      expect(
+        container.read(saveControllerProvider).value?.world.cards,
+        isEmpty,
+      );
+
+      await container
+          .read(saveControllerProvider.notifier)
+          .collectWonderCard('africa');
+
+      final cards =
+          container.read(saveControllerProvider).value?.world.cards;
+      expect(cards, contains('africa'));
+      expect(cards?.length, equals(1));
+    });
+
+    test('collecting same continent id is deduped', () async {
+      final store = _MemStore();
+      final container = ProviderContainer(
+        overrides: [saveStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(saveControllerProvider.future);
+
+      await container
+          .read(saveControllerProvider.notifier)
+          .collectWonderCard('europe');
+      await container
+          .read(saveControllerProvider.notifier)
+          .collectWonderCard('europe');
+
+      final cards =
+          container.read(saveControllerProvider).value?.world.cards;
+      expect(cards?.length, equals(1),
+          reason: 'Duplicate collectWonderCard calls must not add duplicates');
+    });
+
+    test('collecting multiple continents accumulates correctly', () async {
+      final store = _MemStore();
+      final container = ProviderContainer(
+        overrides: [saveStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(saveControllerProvider.future);
+
+      for (final id in ['africa', 'asia', 'europe']) {
+        await container
+            .read(saveControllerProvider.notifier)
+            .collectWonderCard(id);
+      }
+
+      final cards =
+          container.read(saveControllerProvider).value?.world.cards;
+      expect(cards?.length, equals(3));
+      expect(cards, containsAll(['africa', 'asia', 'europe']));
     });
   });
 }

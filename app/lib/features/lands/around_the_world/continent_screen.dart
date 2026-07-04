@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/world_content.dart';
 import '../../../core/audio/tts_service.dart';
-import '../../../core/save_controller.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 
@@ -14,7 +13,7 @@ import '../../../theme/wq_theme.dart';
 /// Shows the continent's animals (tap → fact spoken), a fact ribbon that
 /// rotates every 6 seconds, and buttons for Find mission + Discovery Cards.
 ///
-/// [visitContinent] is called on first arrival.
+/// Stamp/wonder-card grants happen at find-mission completion, not on arrival.
 class ContinentScreen extends ConsumerStatefulWidget {
   const ContinentScreen({
     super.key,
@@ -22,14 +21,12 @@ class ContinentScreen extends ConsumerStatefulWidget {
     required this.onMission,
     required this.onCards,
     required this.onBack,
-    this.firstVisit = false,
   });
 
   final Continent continent;
   final VoidCallback onMission;
   final VoidCallback onCards;
   final VoidCallback onBack;
-  final bool firstVisit;
 
   @override
   ConsumerState<ContinentScreen> createState() => _ContinentScreenState();
@@ -65,16 +62,12 @@ class _ContinentScreenState extends ConsumerState<ContinentScreen> {
   void initState() {
     super.initState();
 
-    // Greet & optionally mark first visit
+    // Greet on arrival — stamp is granted only at find-mission completion.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final c = widget.continent;
       ref
           .read(ttsServiceProvider)
           .speak('${c.theme}! Tap the animals to learn about them.');
-
-      if (widget.firstVisit) {
-        ref.read(saveControllerProvider.notifier).visitContinent(c.id);
-      }
     });
 
     // Start auto-rotating fact ribbon every 6 s

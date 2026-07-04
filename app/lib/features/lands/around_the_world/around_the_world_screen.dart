@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/world_content.dart';
-import '../../../core/save_controller.dart';
 import 'continent_screen.dart';
 import 'discovery_cards_screen.dart';
 import 'find_mission.dart';
@@ -48,18 +47,12 @@ class _AroundTheWorldScreenState extends ConsumerState<AroundTheWorldScreen> {
   _WorldView _view = _WorldView.map;
   Continent? _activeContinent;
   bool _showPassport = false;
-  bool _isFirstVisit = false;
 
   // ---------------------------------------------------------------------------
   // Navigation helpers
   // ---------------------------------------------------------------------------
 
   void _pickContinent(Continent c) {
-    // Determine if this is a first visit to this continent
-    final visited =
-        ref.read(saveControllerProvider).value?.world.visited ?? {};
-    _isFirstVisit = visited[c.id] != true;
-
     setState(() {
       _activeContinent = c;
       _view = _WorldView.traveling;
@@ -123,7 +116,6 @@ class _AroundTheWorldScreenState extends ConsumerState<AroundTheWorldScreen> {
       case _WorldView.continent:
         body = ContinentScreen(
           continent: continent!,
-          firstVisit: _isFirstVisit,
           onMission: _goToMission,
           onCards: _goToCards,
           onBack: _backToMap,

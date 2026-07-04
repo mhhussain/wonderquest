@@ -27,6 +27,7 @@ void main() {
       expect(saveData.world.visited, <String, bool>{});
       expect(saveData.world.points, 0);
       expect(saveData.world.discovery, <String, bool>{});
+      expect(saveData.world.cards, <String>[]);
     });
 
     test('initial() includes all 7 progress keys at 0', () {
@@ -79,6 +80,7 @@ void main() {
           visited: {'location1': true, 'location2': false},
           points: 100,
           discovery: {'card1': true, 'card2': true},
+          cards: ['africa', 'asia'],
         ),
       );
 
@@ -109,6 +111,7 @@ void main() {
       expect(restored.world.visited, original.world.visited);
       expect(restored.world.points, original.world.points);
       expect(restored.world.discovery, original.world.discovery);
+      expect(restored.world.cards, original.world.cards);
     });
 
     test('fromJson() merges defaults for missing keys', () {
@@ -142,6 +145,7 @@ void main() {
       expect(s.world.visited, <String, bool>{});
       expect(s.world.points, 0);
       expect(s.world.discovery, <String, bool>{});
+      expect(s.world.cards, <String>[]);
     });
 
     test('copyWith() changes only specified fields', () {
@@ -222,6 +226,7 @@ void main() {
           visited: {'loc1': true},
           points: 50,
           discovery: {'card1': true},
+          cards: ['africa'],
         ),
       );
 
@@ -240,6 +245,7 @@ void main() {
       expect(identical(restored.levels['big'], original.levels['big']), false);
       expect(identical(restored.world.visited, original.world.visited), false);
       expect(identical(restored.world.discovery, original.world.discovery), false);
+      expect(identical(restored.world.cards, original.world.cards), false);
 
       // Verify mutations on restored do not affect original
       final originalHatchedLength = original.hatched.length;

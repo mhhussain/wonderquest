@@ -151,6 +151,7 @@ class SaveController extends AsyncNotifier<SaveData> {
           visited: visited,
           points: s.world.points,
           discovery: s.world.discovery,
+          cards: s.world.cards,
         ),
       );
     });
@@ -166,6 +167,25 @@ class SaveController extends AsyncNotifier<SaveData> {
           visited: s.world.visited,
           points: s.world.points,
           discovery: discovery,
+          cards: s.world.cards,
+        ),
+      );
+    });
+  }
+
+  /// Add continent [continentId] to the wonder-card collection (deduped).
+  ///
+  /// Called at find-mission completion alongside [visitContinent].
+  Future<void> collectWonderCard(String continentId) async {
+    await _update((s) {
+      final cards = List<String>.from(s.world.cards);
+      if (!cards.contains(continentId)) cards.add(continentId);
+      return s.copyWith(
+        world: WorldState(
+          visited: s.world.visited,
+          points: s.world.points,
+          discovery: s.world.discovery,
+          cards: cards,
         ),
       );
     });
