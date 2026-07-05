@@ -34,3 +34,12 @@ The v1 plan (Task 33) says a wrong-tapped balloon "wiggles". The prototype
 "لا، حاوِل مَرَّة أُخْرَى". Per the prototype-wins rule, the Flutter app keeps the
 prototype behavior: wrong balloon is removed, `Sfx.wrong` + try-again speech,
 no score. Dead `wiggling` scaffolding removed from the balloon model.
+
+## 2026-07-05 — v1 implementation complete per plan
+
+All 35 tasks of `docs/superpowers/plans/2026-07-01-wonder-quest-v1.md` implemented:
+7 playable lands, rewards/save/audio systems, parent gate + dashboard, app icon,
+release checklist (`requirements/app-store-artifacts.md`). `flutter analyze`
+clean, full test suite green, `flutter build ios --release --no-codesign`
+succeeds. Outstanding human items: iPad Arabic TTS spike verification and the
+airplane-mode manual QA script.
