@@ -20,6 +20,8 @@ abstract final class WqColors {
   static const softInk = Color(0xFF6E5D55);
   static const lines = Color(0xFFF0E2CF);
 
+  static const skyTint = Color(0xFFD6EEFF); // letter-pop sky
+
   /// Cycling palette for land tiles (orange → teal → green → … → pink).
   static const List<Color> landColors = [
     orange,

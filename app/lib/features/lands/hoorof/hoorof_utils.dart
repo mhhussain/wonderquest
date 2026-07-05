@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/arabic_letters.dart';
 import '../../../core/audio/tts_service.dart';
+import '../../../core/save_controller.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 
@@ -39,6 +40,24 @@ int arabicProgressTo(Map<String, List<bool>> levels) {
     if (count >= 3) n++;
   }
   return (n * 100 / kArabicLetters.length).round().clamp(0, 100);
+}
+
+/// Number of letters in cluster [clusterIndex] that count toward progress —
+/// i.e. interacted with in ≥ 3 distinct Hoorof game types (same threshold as
+/// [arabicProgressTo]). Ranges 0..cluster length.
+int clusterProgress(int clusterIndex, Map<String, List<bool>> levels) {
+  var n = 0;
+  for (final g in kArabicClusters[clusterIndex]) {
+    final i = kArabicLetters.indexWhere((l) => l.g == g);
+    if (i < 0) continue;
+    var count = 0;
+    for (final id in kHrfGameIds) {
+      final lst = levels[id];
+      if (lst != null && i < lst.length && lst[i]) count++;
+    }
+    if (count >= 3) n++;
+  }
+  return n;
 }
 
 /// Returns the confusable family members for glyph [g], excluding [g] itself.
@@ -95,6 +114,8 @@ class ClusterPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final levels = ref.watch(saveControllerProvider).asData?.value.levels ??
+        const <String, List<bool>>{};
     return Scaffold(
       backgroundColor: WqColors.background,
       appBar: AppBar(
@@ -134,6 +155,7 @@ class ClusterPicker extends ConsumerWidget {
           childAspectRatio: 1.6,
           children: List.generate(kArabicClusters.length, (idx) {
             final cluster = kArabicClusters[idx];
+            final done = clusterProgress(idx, levels);
             return GestureDetector(
               onTap: () {
                 ref
@@ -174,7 +196,10 @@ class ClusterPicker extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Group ${idx + 1}',
+                        'Group ${idx + 1}  ·  '
+                        '${done == cluster.length ? '⭐ ' : ''}'
+                        '$done/${cluster.length}',
+                        key: ValueKey('cluster-progress-$idx'),
                         style: const TextStyle(
                           fontFamily: 'Nunito',
                           fontSize: 12,

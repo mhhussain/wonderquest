@@ -28,7 +28,6 @@ class _Balloon {
     required this.color,
     required this.spawnMs,
     required this.durationMs,
-    this.wiggling = false,
   });
 
   final int id;
@@ -43,19 +42,6 @@ class _Balloon {
 
   /// Milliseconds the balloon takes to float from bottom to off-top.
   final int durationMs;
-
-  /// Whether a wrong-tap wiggle is active (for animation keying).
-  final bool wiggling;
-
-  _Balloon copyWith({bool? wiggling}) => _Balloon(
-        id: id,
-        glyph: glyph,
-        left: left,
-        color: color,
-        spawnMs: spawnMs,
-        durationMs: durationMs,
-        wiggling: wiggling ?? this.wiggling,
-      );
 
   /// Progress from 0 (just spawned, at bottom) to 1.0 (off-top, should remove).
   double progress(int elapsedMs) =>
@@ -84,7 +70,10 @@ const _kBalloonColors = [
 /// the game completes. Wrong taps remove the balloon and play [Sfx.wrong].
 /// The target changes every 2 correct pops.
 class LetterPopScreen extends ConsumerStatefulWidget {
-  const LetterPopScreen({super.key});
+  const LetterPopScreen({super.key, this.random});
+
+  /// Injectable RNG for deterministic tests; defaults to an unseeded [Random].
+  final Random? random;
 
   @override
   ConsumerState<LetterPopScreen> createState() => _LetterPopScreenState();
@@ -97,6 +86,7 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
   static const _kSpawnIntervalMs = 850;
 
   late Ticker _ticker;
+  late final Random _rng = widget.random ?? Random();
   int _elapsedMs = 0;
   int _lastSpawnMs = -_kSpawnIntervalMs; // force immediate first spawn
 
@@ -113,7 +103,7 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
   @override
   void initState() {
     super.initState();
-    _target = kArabicLetters[Random().nextInt(kArabicLetters.length)];
+    _target = kArabicLetters[_rng.nextInt(kArabicLetters.length)];
     _ticker = createTicker(_onTick)..start();
     _scheduleSpeak();
   }
@@ -159,22 +149,21 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
   }
 
   void _spawnBalloon() {
-    final rng = Random();
-    final isTarget = rng.nextDouble() < 0.42;
+    final isTarget = _rng.nextDouble() < 0.42;
     final glyph = isTarget
         ? _target.g
         : kArabicLetters
             .where((l) => l.g != _target.g)
-            .toList()[rng.nextInt(kArabicLetters.length - 1)]
+            .toList()[_rng.nextInt(kArabicLetters.length - 1)]
             .g;
 
     _balloons.add(_Balloon(
       id: _nextId++,
       glyph: glyph,
-      left: 0.06 + rng.nextDouble() * 0.84,
+      left: 0.06 + _rng.nextDouble() * 0.84,
       color: _kBalloonColors[_nextId % _kBalloonColors.length],
       spawnMs: _elapsedMs,
-      durationMs: 6000 + rng.nextInt(3000),
+      durationMs: 6000 + _rng.nextInt(3000),
     ));
   }
 
@@ -204,7 +193,7 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
       } else if (_score % 2 == 0) {
         // Change target every 2 correct pops.
         final pool = kArabicLetters.where((l) => l.g != _target.g).toList();
-        _target = pool[Random().nextInt(pool.length)];
+        _target = pool[_rng.nextInt(pool.length)];
         _scheduleSpeak();
       }
     } else {
@@ -267,7 +256,7 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
             _elapsedMs = 0;
             _lastSpawnMs = -_kSpawnIntervalMs;
             _target =
-                kArabicLetters[Random().nextInt(kArabicLetters.length)];
+                kArabicLetters[_rng.nextInt(kArabicLetters.length)];
             _completing = false;
           });
           _ticker
@@ -288,9 +277,9 @@ class _LetterPopScreenState extends ConsumerState<LetterPopScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD6EEFF), // light sky
+      backgroundColor: WqColors.skyTint,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFD6EEFF),
+        backgroundColor: WqColors.skyTint,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: WqColors.ink),

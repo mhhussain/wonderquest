@@ -26,3 +26,11 @@ Created `app/lib/features/spike/tts_spike_screen.dart`: a debug-only screen (rea
 
 ## [2026-07-03] divergence | Shape Safari uses emoji shapes (prototype behavior) instead of plan-suggested CustomPaint geometry
 The plan brief suggested drawing shapes with CustomPaint for crisp geometry, but the Flutter implementation follows prototype behavior (kShapeRounds uses emoji characters rendered via SpotScene scatter), keeping emoji-as-art consistent with every other detective game.
+
+## 2026-07-04 — Letter Pop wrong-tap divergence (plan vs prototype)
+
+The v1 plan (Task 33) says a wrong-tapped balloon "wiggles". The prototype
+(`raw/hoorof2.jsx`, `HrfPop.tap`) **removes** the wrong balloon and speaks
+"لا، حاوِل مَرَّة أُخْرَى". Per the prototype-wins rule, the Flutter app keeps the
+prototype behavior: wrong balloon is removed, `Sfx.wrong` + try-again speech,
+no score. Dead `wiggling` scaffolding removed from the balloon model.

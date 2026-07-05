@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import 'package:wonder_quest/core/persistence/save_file.dart';
 import 'package:wonder_quest/core/save_controller.dart';
 import 'package:wonder_quest/features/lands/hoorof/hear_match_game.dart';
 import 'package:wonder_quest/features/lands/hoorof/hoorof_utils.dart';
+import 'package:wonder_quest/features/lands/hoorof/letter_pop_game.dart';
 import 'package:wonder_quest/features/lands/hoorof/shape_builder_game.dart';
 
 // ---------------------------------------------------------------------------
@@ -450,6 +452,166 @@ void main() {
               'decoy pool for ${letter.g} must not contain the target itself',
         );
       }
+    });
+  });
+
+  // ── Group 8: clusterProgress pure function ───────────────────────────────
+
+  group('clusterProgress', () {
+    List<bool> markGlyphs(List<String> glyphs) {
+      final lst = List<bool>.filled(kArabicLetters.length, false);
+      for (final g in glyphs) {
+        lst[kArabicLetters.indexWhere((l) => l.g == g)] = true;
+      }
+      return lst;
+    }
+
+    test('returns 0 for every cluster when no levels are recorded', () {
+      for (var i = 0; i < kArabicClusters.length; i++) {
+        expect(clusterProgress(i, {}), 0, reason: 'cluster $i should be 0');
+      }
+    });
+
+    test('letter in only 2 game types does not count', () {
+      final cluster0 = kArabicClusters[0];
+      final levels = {
+        'hrf-learn': markGlyphs(cluster0),
+        'hrf-trace': markGlyphs(cluster0),
+      };
+      expect(clusterProgress(0, levels), 0);
+    });
+
+    test('cluster letters done in 3 game types count fully, others 0', () {
+      final cluster0 = kArabicClusters[0];
+      final levels = {
+        'hrf-learn': markGlyphs(cluster0),
+        'hrf-trace': markGlyphs(cluster0),
+        'hrf-hear': markGlyphs(cluster0),
+      };
+      expect(clusterProgress(0, levels), cluster0.length);
+      expect(clusterProgress(1, levels), 0);
+    });
+
+    test('partial cluster: only the ≥3-game letters count', () {
+      final cluster0 = kArabicClusters[0];
+      final first = cluster0.first;
+      final levels = {
+        'hrf-learn': markGlyphs([first]),
+        'hrf-hear': markGlyphs([first]),
+        'hrf-pop': markGlyphs([first]),
+      };
+      expect(clusterProgress(0, levels), 1);
+    });
+  });
+
+  // ── Group 9: ClusterPicker progress indicator ────────────────────────────
+
+  group('ClusterPicker', () {
+    testWidgets('tile shows 0/N progress with a fresh save', (tester) async {
+      final store = _MemStore();
+      final fakeTts = _FakeTtsBackend();
+      await tester.pumpWidget(_harness(
+        store: store,
+        fakeTts: fakeTts,
+        child: ClusterPicker(
+          title: 'Learn the Letter',
+          emoji: '🔤',
+          color: Colors.teal,
+          onPick: (_) {},
+          onExit: () {},
+        ),
+      ));
+      await _settle(tester);
+
+      final label = tester.widget<Text>(
+        find.byKey(const ValueKey('cluster-progress-0')),
+      );
+      expect(label.data, 'Group 1  ·  0/${kArabicClusters[0].length}');
+    });
+  });
+
+  // ── Group 10: LetterPopScreen (seeded, deterministic) ────────────────────
+
+  group('LetterPopScreen', () {
+    testWidgets(
+        'wrong balloon is removed without scoring; correct balloon scores',
+        (tester) async {
+      const seed = 7;
+      // Mirror the widget's first RNG draw to know the target glyph.
+      final target =
+          kArabicLetters[Random(seed).nextInt(kArabicLetters.length)].g;
+
+      final store = _MemStore();
+      final fakeTts = _FakeTtsBackend();
+      await tester.pumpWidget(_harness(
+        store: store,
+        fakeTts: fakeTts,
+        child: LetterPopScreen(random: Random(seed)),
+      ));
+
+      // Let the announce timer (400 ms) fire and balloons spawn (850 ms each).
+      await tester.pump(const Duration(milliseconds: 500));
+
+      String glyphOf(int id) => tester
+          .widget<Text>(find.descendant(
+            of: find.byKey(ValueKey('balloon-$id')),
+            matching: find.byType(Text),
+          ))
+          .data!;
+
+      // Balloons spawn at the bottom edge (partly offscreen) and overlapping
+      // balloons steal hit-tests, so only tap balloons that are fully visible
+      // and well clear of every other balloon on screen.
+      bool isClear(int id) {
+        final rect = tester.getRect(find.byKey(ValueKey('balloon-$id')));
+        if (rect.top < 100 || rect.bottom > 530) return false;
+        final c = tester.getCenter(find.byKey(ValueKey('balloon-$id')));
+        for (var other = 0; other < 60; other++) {
+          if (other == id) continue;
+          final f = find.byKey(ValueKey('balloon-$other'));
+          if (f.evaluate().isEmpty) continue;
+          if ((tester.getCenter(f) - c).distance < 110) return false;
+        }
+        return true;
+      }
+
+      int? findClearBalloon({required bool wantTarget}) {
+        for (var id = 0; id < 60; id++) {
+          final f = find.byKey(ValueKey('balloon-$id'));
+          if (f.evaluate().isEmpty) continue;
+          if ((glyphOf(id) == target) != wantTarget) continue;
+          if (isClear(id)) return id;
+        }
+        return null;
+      }
+
+      Future<int> waitForClearBalloon({required bool wantTarget}) async {
+        for (var i = 0; i < 40; i++) {
+          final id = findClearBalloon(wantTarget: wantTarget);
+          if (id != null) return id;
+          await tester.pump(const Duration(milliseconds: 850));
+        }
+        fail('no clear ${wantTarget ? 'target' : 'wrong'} balloon appeared');
+      }
+
+      expect(find.text('🎈 0/6'), findsOneWidget);
+
+      // Wrong tap: balloon removed (prototype behavior), no score.
+      final wrongId = await waitForClearBalloon(wantTarget: false);
+      await tester.tap(find.byKey(ValueKey('balloon-$wrongId')));
+      await tester.pump();
+      expect(find.byKey(ValueKey('balloon-$wrongId')), findsNothing);
+      expect(find.text('🎈 0/6'), findsOneWidget);
+
+      // Correct tap: balloon removed and score increments.
+      final correctId = await waitForClearBalloon(wantTarget: true);
+      await tester.tap(find.byKey(ValueKey('balloon-$correctId')));
+      await tester.pump();
+      expect(find.byKey(ValueKey('balloon-$correctId')), findsNothing);
+      expect(find.text('🎈 1/6'), findsOneWidget);
+
+      // Dispose the screen to stop the ticker before the test ends.
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }
