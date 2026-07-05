@@ -10,8 +10,8 @@ import '../../theme/wq_colors.dart';
 import '../../theme/wq_theme.dart';
 import '../../widgets/hud.dart';
 import '../../widgets/wq_button.dart';
+import '../parent/dashboard_screen.dart';
 import '../parent/parent_gate.dart';
-import '../parent/settings_screen.dart';
 
 /// Home screen — the Expedition Map.
 ///

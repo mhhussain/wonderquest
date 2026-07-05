@@ -1,78 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/art.dart';
 import '../../core/save_controller.dart';
 import '../../theme/wq_colors.dart';
 import '../../theme/wq_theme.dart';
-import '../../widgets/wq_button.dart';
-
-// ── Dashboard (placeholder until Task 34) ─────────────────────────────────────
-
-/// Placeholder parent dashboard shown after the multiplication gate passes.
-///
-/// Task 34 will replace the body with real analytics.  The AppBar "Settings"
-/// action and the body [WqButton] both navigate to [SettingsScreen].
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: WqColors.background,
-      appBar: AppBar(
-        backgroundColor: WqColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: WqColors.ink),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text('Parent Dashboard', style: WqTheme.headingStyle(22)),
-        actions: [
-          IconButton(
-            key: const Key('dashboard-settings'),
-            icon: const Icon(Icons.settings_outlined, color: WqColors.ink),
-            tooltip: 'Settings',
-            onPressed: () => Navigator.of(context).push<void>(
-              MaterialPageRoute<void>(
-                builder: (_) => const SettingsScreen(),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Art.glyph('parent', size: 72),
-            const SizedBox(height: 16),
-            Text(
-              'Dashboard coming in Task 34',
-              style: WqTheme.headingStyle(24),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 220,
-              child: WqButton(
-                key: const Key('dashboard-settings-btn'),
-                label: 'Settings',
-                color: WqColors.grape,
-                onTap: () => Navigator.of(context).push<void>(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const SettingsScreen(),
-                  ),
-                ),
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── Settings screen ────────────────────────────────────────────────────────────
 
