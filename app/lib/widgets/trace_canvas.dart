@@ -29,6 +29,7 @@ class TraceCanvas extends StatefulWidget {
     required this.glyph,
     this.fontFamily = 'Baloo2',
     required this.onCovered,
+    this.onAccuracy,
     @visibleForTesting this.debugGuidePoints,
   });
 
@@ -41,6 +42,10 @@ class TraceCanvas extends StatefulWidget {
 
   /// Called exactly once when stroke coverage reaches ≥ 85 %.
   final VoidCallback onCovered;
+
+  /// Called (once, just before [onCovered]) with the tracing accuracy in
+  /// [0..1] — the fraction of stroke points that landed on the glyph.
+  final ValueChanged<double>? onAccuracy;
 
   /// Pre-computed guide points that bypass raster extraction.
   ///
@@ -305,9 +310,11 @@ class _TraceCanvasState extends State<TraceCanvas>
 
   void _checkDone() {
     if (_done) return;
-    if (_scorer?.done ?? false) {
+    final scorer = _scorer;
+    if (scorer != null && scorer.done) {
       _done = true;
       _triggerSparkle();
+      widget.onAccuracy?.call(scorer.accuracy);
       widget.onCovered();
     }
   }

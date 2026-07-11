@@ -166,6 +166,10 @@ class _ReadingWordsQuestionState extends ConsumerState<ReadingWordsQuestion> {
   void _handleDrop(String letter) {
     if (_done || _filled.length >= widget.round.miss.length) return;
     final needed = widget.round.miss[_filled.length];
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.letter(needed.toUpperCase()),
+            correct: letter == needed));
     if (letter == needed) {
       final newFilled = [..._filled, letter];
       final allDone = newFilled.length >= widget.round.miss.length;

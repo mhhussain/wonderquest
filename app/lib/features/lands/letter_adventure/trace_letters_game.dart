@@ -245,6 +245,10 @@ class _LetterPairTraceQuestionState
                           key: ValueKey('upper-$_resetKey'),
                           glyph: letter.u,
                           onCovered: _onUpperCovered,
+                          onAccuracy: (a) => ref
+                              .read(saveControllerProvider.notifier)
+                              .recordSkill(SkillKeys.trace(letter.u),
+                                  (a * 100).round()),
                           // ignore: invalid_use_of_visible_for_testing_member
                           debugGuidePoints: widget.debugUpperGuidePoints,
                         ),
@@ -280,6 +284,10 @@ class _LetterPairTraceQuestionState
                           key: ValueKey('lower-$_resetKey'),
                           glyph: letter.l,
                           onCovered: _onLowerCovered,
+                          onAccuracy: (a) => ref
+                              .read(saveControllerProvider.notifier)
+                              .recordSkill(SkillKeys.trace(letter.l),
+                                  (a * 100).round()),
                           // ignore: invalid_use_of_visible_for_testing_member
                           debugGuidePoints: widget.debugLowerGuidePoints,
                         ),

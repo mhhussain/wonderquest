@@ -119,6 +119,9 @@ class _HearMatchScreenState extends ConsumerState<HearMatchScreen> {
     final correct = _rounds[_roundIdx].g;
     final ok = g == correct;
     setState(() => _picked = g);
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.arabic(correct), correct: ok));
 
     if (ok) {
       final letter = _rounds[_roundIdx];

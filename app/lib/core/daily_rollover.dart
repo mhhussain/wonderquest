@@ -54,7 +54,9 @@ SaveData applyDailyRollover(SaveData s, DateTime now) {
   );
 }
 
-/// Adds one minute to both minutesToday and the current weekday slot.
+/// Adds one minute to minutesToday, the current weekday slot, and today's
+/// [SaveData.sessions] entry (appending one if today has none, trimming the
+/// history to [SaveData.maxSessionHistory]).
 SaveData addPlayMinute(SaveData s, DateTime now) {
   final newMinutesToday = s.minutesToday + 1;
 
@@ -64,9 +66,22 @@ SaveData addPlayMinute(SaveData s, DateTime now) {
   final newWeek = List<int>.from(s.week);
   newWeek[weekIndex] = newWeek[weekIndex] + 1;
 
+  final today = _formatDate(now);
+  final sessions = List<SessionEntry>.from(s.sessions);
+  if (sessions.isNotEmpty && sessions.last.date == today) {
+    sessions[sessions.length - 1] =
+        SessionEntry(date: today, minutes: sessions.last.minutes + 1);
+  } else {
+    sessions.add(SessionEntry(date: today, minutes: 1));
+  }
+  while (sessions.length > SaveData.maxSessionHistory) {
+    sessions.removeAt(0);
+  }
+
   return s.copyWith(
     minutesToday: newMinutesToday,
     week: newWeek,
+    sessions: sessions,
   );
 }
 

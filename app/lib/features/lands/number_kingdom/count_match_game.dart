@@ -208,6 +208,9 @@ class _CountMatchQuestionState extends ConsumerState<CountMatchQuestion> {
       _picked = n;
       _correct = ok;
     });
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.number(answer), correct: ok));
 
     if (ok) {
       unawaited(ref.read(sfxServiceProvider).play(Sfx.ding));

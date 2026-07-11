@@ -1,5 +1,38 @@
-import '../progress_keys.dart';
 import 'package:flutter/foundation.dart';
+
+import '../progress_keys.dart';
+
+/// One day of play, kept in [SaveData.sessions] (newest last, capped at
+/// [SaveData.maxSessionHistory] entries) for the parent-dashboard session
+/// history.
+@immutable
+class SessionEntry {
+  const SessionEntry({required this.date, required this.minutes});
+
+  /// Local date, 'yyyy-MM-dd'.
+  final String date;
+
+  /// Minutes played on [date].
+  final int minutes;
+
+  Map<String, dynamic> toJson() => {'date': date, 'minutes': minutes};
+
+  static SessionEntry fromJson(Map<String, dynamic> json) => SessionEntry(
+        date: (json['date'] as String?) ?? '',
+        minutes: (json['minutes'] as int?) ?? 0,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SessionEntry &&
+          runtimeType == other.runtimeType &&
+          date == other.date &&
+          minutes == other.minutes;
+
+  @override
+  int get hashCode => Object.hash(date, minutes);
+}
 
 /// Represents the world state in a save file.
 @immutable
@@ -83,7 +116,13 @@ class SaveData {
     required this.week,
     required this.levels,
     required this.world,
+    this.skillStats = const {},
+    this.landPlays = const {},
+    this.sessions = const [],
   });
+
+  /// Maximum [sessions] entries retained (about a month of history).
+  static const maxSessionHistory = 30;
 
   /// Schema version for migrations (always 1 for now)
   final int schemaVersion;
@@ -148,6 +187,20 @@ class SaveData {
   /// Around-the-world state
   final WorldState world;
 
+  /// Per-skill mastery aggregates: key (e.g. 'letter:B', 'number:7',
+  /// 'math:add', 'arabic:ب', 'trace:B') → `[attempts, scorePoints]` where
+  /// each attempt contributes 0–100 score points (quiz answers score 0 or
+  /// 100; tracing scores its accuracy percent). Mean percent =
+  /// scorePoints / attempts. Aggregate counters, not an event log (per the
+  /// no-event-log decision).
+  final Map<String, List<int>> skillStats;
+
+  /// Completed game sessions per land (progress key → count).
+  final Map<String, int> landPlays;
+
+  /// Daily play-minute history (newest last, ≤ [maxSessionHistory] entries).
+  final List<SessionEntry> sessions;
+
   /// Create an initial save with defaults for a new profile.
   factory SaveData.initial({required String profileId}) {
     return SaveData(
@@ -211,6 +264,9 @@ class SaveData {
     List<int>? week,
     Map<String, List<bool>>? levels,
     WorldState? world,
+    Map<String, List<int>>? skillStats,
+    Map<String, int>? landPlays,
+    List<SessionEntry>? sessions,
   }) {
     return SaveData(
       schemaVersion: schemaVersion ?? this.schemaVersion,
@@ -234,6 +290,9 @@ class SaveData {
       week: week ?? this.week,
       levels: levels ?? this.levels,
       world: world ?? this.world,
+      skillStats: skillStats ?? this.skillStats,
+      landPlays: landPlays ?? this.landPlays,
+      sessions: sessions ?? this.sessions,
     );
   }
 
@@ -260,6 +319,9 @@ class SaveData {
         'week': week,
         'levels': levels,
         'world': world.toJson(),
+        'skillStats': skillStats,
+        'landPlays': landPlays,
+        'sessions': sessions.map((s) => s.toJson()).toList(),
       };
 
   /// Create from JSON, filling missing keys with defaults.
@@ -297,6 +359,29 @@ class SaveData {
     final worldJson = json['world'] as Map<String, dynamic>? ?? {};
     final world = WorldState.fromJson(worldJson);
 
+    // Build skill stats ([attempts, scorePoints] pairs)
+    final skillStatsJson = json['skillStats'] as Map<String, dynamic>? ?? {};
+    final skillStats = <String, List<int>>{};
+    skillStatsJson.forEach((key, value) {
+      if (value is List<dynamic>) {
+        skillStats[key] = value.cast<int>().toList();
+      }
+    });
+
+    // Build land plays
+    final landPlaysJson = json['landPlays'] as Map<String, dynamic>? ?? {};
+    final landPlays = <String, int>{
+      for (final e in landPlaysJson.entries)
+        if (e.value is int) e.key: e.value as int,
+    };
+
+    // Build session history
+    final sessionsJson = json['sessions'] as List<dynamic>? ?? [];
+    final sessions = [
+      for (final e in sessionsJson)
+        if (e is Map<String, dynamic>) SessionEntry.fromJson(e),
+    ];
+
     return SaveData(
       schemaVersion: (json['schemaVersion'] as int?) ?? 1,
       profileId: (json['profileId'] as String?) ?? '',
@@ -319,6 +404,9 @@ class SaveData {
       week: week,
       levels: levels,
       world: world,
+      skillStats: skillStats,
+      landPlays: landPlays,
+      sessions: sessions,
     );
   }
 
@@ -347,7 +435,10 @@ class SaveData {
           lastPlayedDate == other.lastPlayedDate &&
           listEquals(week, other.week) &&
           _levelsMapEquals(levels, other.levels) &&
-          world == other.world;
+          world == other.world &&
+          _statsMapEquals(skillStats, other.skillStats) &&
+          mapEquals(landPlays, other.landPlays) &&
+          listEquals(sessions, other.sessions);
 
   @override
   int get hashCode => Object.hashAll([
@@ -372,11 +463,27 @@ class SaveData {
         Object.hashAll(week),
         Object.hashAll(levels.entries.map((e) => Object.hash(e.key, Object.hashAll(e.value)))),
         world,
+        Object.hashAll(
+            skillStats.entries.map((e) => Object.hash(e.key, Object.hashAll(e.value)))),
+        Object.hashAll(landPlays.entries.map((e) => Object.hash(e.key, e.value))),
+        Object.hashAll(sessions),
       ]);
 
   /// Helper to compare nested maps of lists.
   static bool _levelsMapEquals(
       Map<String, List<bool>> a, Map<String, List<bool>> b) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || !listEquals(a[key], b[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Helper to compare skill-stat maps of int lists.
+  static bool _statsMapEquals(
+      Map<String, List<int>> a, Map<String, List<int>> b) {
     if (a.length != b.length) return false;
     for (final key in a.keys) {
       if (!b.containsKey(key) || !listEquals(a[key], b[key])) {

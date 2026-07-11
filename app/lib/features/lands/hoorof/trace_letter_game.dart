@@ -248,6 +248,10 @@ class _TraceLetterScreenState extends ConsumerState<TraceLetterScreen> {
                       glyph: letter.g,
                       fontFamily: 'NotoNaskhArabic',
                       onCovered: _onCovered,
+                      onAccuracy: (a) => ref
+                          .read(saveControllerProvider.notifier)
+                          .recordSkill(
+                              SkillKeys.trace(letter.g), (a * 100).round()),
                     ),
                   ),
                 ),

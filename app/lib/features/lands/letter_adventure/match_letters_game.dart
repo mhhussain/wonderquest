@@ -180,6 +180,9 @@ class _MatchQuestionState extends ConsumerState<MatchQuestion> {
       _picked = chosen;
       _correct = ok;
     });
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.letter(widget.letter.u), correct: ok));
 
     if (ok) {
       unawaited(

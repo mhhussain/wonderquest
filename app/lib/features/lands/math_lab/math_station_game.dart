@@ -288,6 +288,9 @@ class _MathStationQuestionState extends ConsumerState<MathStationQuestion> {
       _picked = n;
       _correct = ok;
     });
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.math(widget.station.type.name), correct: ok));
 
     if (ok) {
       unawaited(ref.read(sfxServiceProvider).play(Sfx.ding));
@@ -321,6 +324,9 @@ class _MathStationQuestionState extends ConsumerState<MathStationQuestion> {
       _pickedA = choseA;
       _compareCorrect = ok;
     });
+    unawaited(ref
+        .read(saveControllerProvider.notifier)
+        .recordAttempt(SkillKeys.math(widget.station.type.name), correct: ok));
 
     if (ok) {
       unawaited(ref.read(sfxServiceProvider).play(Sfx.ding));

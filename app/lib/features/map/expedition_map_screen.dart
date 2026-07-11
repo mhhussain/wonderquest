@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../content/lands.dart';
 import '../../core/art.dart';
+import '../../core/persistence/save_data.dart';
 import '../../core/save_controller.dart';
+import '../../domain/badges.dart';
 import '../../theme/wq_colors.dart';
 import '../../theme/wq_theme.dart';
 import '../../widgets/hud.dart';
@@ -52,10 +54,7 @@ class ExpeditionMapScreen extends ConsumerWidget {
           children: [
             Art.glyph(Art.mascot, size: 72),
             const SizedBox(height: 16),
-            Text(
-              'Coming in a later task',
-              style: WqTheme.headingStyle(28),
-            ),
+            Text('Coming in a later task', style: WqTheme.headingStyle(28)),
           ],
         ),
       ),
@@ -66,9 +65,7 @@ class ExpeditionMapScreen extends ConsumerWidget {
 
   void _openLand(BuildContext context, Land land) {
     final builder = land.builder ?? _placeholderBuilder;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: builder),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: builder));
   }
 
   void _openCollections(BuildContext context) {
@@ -125,19 +122,14 @@ class ExpeditionMapScreen extends ConsumerWidget {
                   key: Key('land-card-${land.id}'),
                   land: land,
                   progress: landProgress,
-                  onTap: land.playable
-                      ? () => _openLand(context, land)
-                      : null,
+                  onTap: land.playable ? () => _openLand(context, land) : null,
                 );
               },
             ),
           ),
 
           // ── Bottom bar: Rexy tip + My Stuff button ──────────────────────────
-          _BottomBar(
-            tip: tip,
-            onMyStuff: () => _openCollections(context),
-          ),
+          _BottomBar(tip: tip, onMyStuff: () => _openCollections(context)),
         ],
       ),
     );
@@ -244,9 +236,7 @@ class _LandCard extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.30),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Center(
-                      child: Art.glyph('lock', size: 40),
-                    ),
+                    child: Center(child: Art.glyph('lock', size: 40)),
                   ),
                 ),
             ],
@@ -283,10 +273,7 @@ class _Pill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              Art.emoji(emojiKey),
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(Art.emoji(emojiKey), style: const TextStyle(fontSize: 12)),
             Text(
               label,
               style: TextStyle(
@@ -409,7 +396,7 @@ class _RexyTip extends StatelessWidget {
 
 // ── Collections modal ──────────────────────────────────────────────────────────
 
-/// "My Treasure Chest" tabbed modal (Dinos · Stickers · Animals).
+/// "My Treasure Chest" tabbed modal (Dinos · Stickers · Animals · Badges).
 ///
 /// Displayed via [showDialog] from [ExpeditionMapScreen._openCollections].
 /// Uses [ConsumerStatefulWidget] to read/mutate the save file.
@@ -496,8 +483,10 @@ class _CollectionsModalState extends ConsumerState<_CollectionsModal> {
                       onHatch: _hatch,
                     )
                   : _tab == 'stickers'
-                      ? _StickersTab(stickers: stickers)
-                      : _AnimalsTab(animalsFound: animalsFound),
+                  ? _StickersTab(stickers: stickers)
+                  : _tab == 'animals'
+                  ? _AnimalsTab(animalsFound: animalsFound)
+                  : _BadgesTab(save: save),
             ),
           ],
         ),
@@ -549,10 +538,7 @@ class _ModalHeader extends StatelessWidget {
 
 /// Horizontal row of tab selector buttons.
 class _TabRow extends StatelessWidget {
-  const _TabRow({
-    required this.selectedTab,
-    required this.onTabSelected,
-  });
+  const _TabRow({required this.selectedTab, required this.onTabSelected});
 
   final String selectedTab;
   final ValueChanged<String> onTabSelected;
@@ -561,6 +547,7 @@ class _TabRow extends StatelessWidget {
     ('dinos', 'dino-bronto', 'Dinos'),
     ('stickers', 'sparkle', 'Stickers'),
     ('animals', 'land-animal', 'Animals'),
+    ('badges', 'trophy', 'Badges'),
   ];
 
   @override
@@ -571,44 +558,51 @@ class _TabRow extends StatelessWidget {
         children: _tabs.map((t) {
           final (id, emoji, label) = t;
           final selected = selectedTab == id;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              key: Key('tab-$id'),
-              onTap: () => onTabSelected(id),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                constraints: const BoxConstraints(minHeight: 64),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: selected ? WqColors.orange : WqColors.backgroundAlt,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: selected ? WqColors.orange : WqColors.lines,
+          // Expanded so all four tabs always fit the modal width.
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                key: Key('tab-$id'),
+                onTap: () => onTabSelected(id),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  constraints: const BoxConstraints(minHeight: 64),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      Art.emoji(emoji),
-                      style: const TextStyle(fontSize: 16),
+                  decoration: BoxDecoration(
+                    color: selected ? WqColors.orange : WqColors.backgroundAlt,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected ? WqColors.orange : WqColors.lines,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: selected ? Colors.white : WqColors.ink,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        Art.emoji(emoji),
+                        style: const TextStyle(fontSize: 16),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: selected ? Colors.white : WqColors.ink,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -733,11 +727,11 @@ class _DinoSlot extends StatelessWidget {
                     child: Art.glyph(dino.emojiKey, size: 40),
                   )
                 : isHatching
-                    ? const _CrackingEgg()
-                    : KeyedSubtree(
-                        key: const ValueKey('egg-still'),
-                        child: Art.glyph('egg', size: 40),
-                      ),
+                ? const _CrackingEgg()
+                : KeyedSubtree(
+                    key: const ValueKey('egg-still'),
+                    child: Art.glyph('egg', size: 40),
+                  ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -774,10 +768,7 @@ class _CrackingEgg extends StatelessWidget {
         final scale = 1.0 + 0.3 * sin(t * pi);
         return Transform.scale(
           scale: scale,
-          child: Transform.rotate(
-            angle: angle,
-            child: child!,
-          ),
+          child: Transform.rotate(angle: angle, child: child!),
         );
       },
       child: Art.glyph('egg', size: 40),
@@ -877,6 +868,77 @@ class _AnimalsTab extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Badges tab ─────────────────────────────────────────────────────────────────
+
+/// Grid of all badges; earned ones show in full colour with a green ring,
+/// unearned ones sit greyed out with their how-to-earn description.
+class _BadgesTab extends StatelessWidget {
+  const _BadgesTab({required this.save});
+
+  final SaveData? save;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = save;
+    final earned = data == null ? const <String>{} : earnedBadgeIds(data);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.95,
+        ),
+        itemCount: kAllBadges.length,
+        itemBuilder: (_, i) {
+          final badge = kAllBadges[i];
+          final isEarned = earned.contains(badge.id);
+          return DecoratedBox(
+            key: Key('badge-${badge.id}'),
+            decoration: BoxDecoration(
+              color: WqColors.backgroundAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isEarned ? WqColors.green : WqColors.lines,
+                width: 2,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(
+                    opacity: isEarned ? 1.0 : 0.35,
+                    child: Art.glyph(badge.icon, size: 30),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    badge.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: WqTheme.headingStyle(12).copyWith(
+                      color: isEarned ? WqColors.ink : WqColors.softInk,
+                    ),
+                  ),
+                  Text(
+                    isEarned ? 'Earned!' : badge.description,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    style: WqTheme.bodyStyle(9, color: WqColors.softInk),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

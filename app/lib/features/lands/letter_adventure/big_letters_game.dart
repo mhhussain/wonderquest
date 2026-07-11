@@ -206,6 +206,10 @@ class _LetterTraceQuestionState extends ConsumerState<LetterTraceQuestion> {
                   key: ValueKey('trace-$_resetKey'),
                   glyph: letter.u,
                   onCovered: _onCovered,
+                  onAccuracy: (a) => ref
+                      .read(saveControllerProvider.notifier)
+                      .recordSkill(
+                          SkillKeys.trace(letter.u), (a * 100).round()),
                   // ignore: invalid_use_of_visible_for_testing_member
                   debugGuidePoints: widget.debugGuidePoints,
                 ),

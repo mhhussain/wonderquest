@@ -53,14 +53,18 @@ SaveData applyReward(SaveData state, Reward reward) {
     newAnimalsFound.add(reward.animal!);
   }
 
-  // Handle progress (monotonic, clamped)
+  // Handle progress (monotonic, clamped) and count the completed game
+  // session toward its land's play total.
   var newProgress = {...state.progress};
+  var newLandPlays = state.landPlays;
   if (reward.progressKey != null && reward.progressTo != null) {
     final key = reward.progressKey!;
     final currentValue = newProgress[key] ?? 0;
     final newValue = reward.progressTo!.clamp(0, 100);
     // Keep monotonic: never decrease
     newProgress[key] = newValue > currentValue ? newValue : currentValue;
+    newLandPlays = {...state.landPlays};
+    newLandPlays[key] = (newLandPlays[key] ?? 0) + 1;
   }
 
   // Return updated state
@@ -72,5 +76,6 @@ SaveData applyReward(SaveData state, Reward reward) {
     stickers: newStickers,
     animalsFound: newAnimalsFound,
     progress: newProgress,
+    landPlays: newLandPlays,
   );
 }

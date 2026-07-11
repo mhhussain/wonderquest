@@ -191,6 +191,22 @@ class SaveController extends AsyncNotifier<SaveData> {
     });
   }
 
+  /// Record one attempt at skill [key] (a `SkillKeys` value) scoring
+  /// [scorePct] (0–100; quiz answers score 0 or 100, tracing scores its
+  /// accuracy percent) and persist. Aggregate counters only — no event log.
+  Future<void> recordSkill(String key, int scorePct) async {
+    await _update((s) {
+      final stats = Map<String, List<int>>.from(s.skillStats);
+      final prev = stats[key] ?? const [0, 0];
+      stats[key] = [prev[0] + 1, prev[1] + scorePct.clamp(0, 100)];
+      return s.copyWith(skillStats: stats);
+    });
+  }
+
+  /// Record one correct/incorrect attempt at skill [key] and persist.
+  Future<void> recordAttempt(String key, {required bool correct}) =>
+      recordSkill(key, correct ? 100 : 0);
+
   /// Add one play-minute (via [addPlayMinute]) and persist.
   Future<void> addMinute() async {
     await _update((s) => addPlayMinute(s, DateTime.now()));

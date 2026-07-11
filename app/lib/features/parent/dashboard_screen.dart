@@ -2,15 +2,19 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../content/arabic_letters.dart';
 import '../../core/art.dart';
 import '../../core/progress_keys.dart';
 import '../../core/persistence/save_data.dart';
 import '../../core/save_controller.dart';
+import '../../domain/badges.dart';
 import '../../theme/wq_colors.dart';
 import '../../theme/wq_theme.dart';
 import 'settings_screen.dart';
+
+export '../../domain/badges.dart' show readinessPercent;
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for tests)
@@ -40,12 +44,45 @@ int skillPercent(List<String> keys, Map<String, int> progress) {
   return (sum / keys.length).round().clamp(0, 100);
 }
 
-/// Overall readiness: mean of all 7 progress keys, 0–100.
-int readinessPercent(Map<String, int> progress) {
-  final sum =
-      ProgressKeys.all.fold<int>(0, (a, k) => a + (progress[k] ?? 0));
-  return (sum / ProgressKeys.all.length).round().clamp(0, 100);
+/// Mean tracing accuracy (0–100) across all `trace:*` skill stats, or null
+/// when no tracing has been recorded yet.
+int? traceAccuracyPercent(Map<String, List<int>> skillStats) {
+  var attempts = 0;
+  var points = 0;
+  skillStats.forEach((key, value) {
+    if (key.startsWith(SkillKeys.tracePrefix) && value.length >= 2) {
+      attempts += value[0];
+      points += value[1];
+    }
+  });
+  if (attempts == 0) return null;
+  return (points / attempts).round().clamp(0, 100);
 }
+
+/// Plain-text weekly report for the "Email weekly report" CTA.
+String weeklyReportBody(SaveData save) {
+  final buffer = StringBuffer()
+    ..writeln('Wonder Quest — weekly report for ${save.name}')
+    ..writeln()
+    ..writeln('Level ${save.level} · ${save.stars} stars · '
+        '${save.streak}-day streak')
+    ..writeln('This week: ${save.week.fold<int>(0, (a, b) => a + b)} min '
+        '(today: ${save.minutesToday} min)')
+    ..writeln()
+    ..writeln('Skills:');
+  for (final bar in kSkillBars) {
+    buffer.writeln('- ${bar.label}: ${skillPercent(bar.keys, save.progress)}%');
+  }
+  final trace = traceAccuracyPercent(save.skillStats);
+  if (trace != null) buffer.writeln('- Tracing accuracy: $trace%');
+  buffer
+    ..writeln()
+    ..writeln('GSRP readiness: ${readinessPercent(save.progress)}%');
+  return buffer.toString();
+}
+
+// readinessPercent now lives in domain/badges.dart (shared with the badge
+// derivations); re-exported here for existing callers/tests.
 
 /// How many of the 28 Arabic letters count as mastered, derived from the
 /// `progress.arabic` percentage (the separate-Arabic-metric decision).
@@ -140,11 +177,13 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _WeekCard(week: save.week),
                 const SizedBox(height: 14),
-                _SkillBarsCard(progress: save.progress),
+                _SessionHistoryCard(save: save),
+                const SizedBox(height: 14),
+                _SkillBarsCard(save: save),
                 const SizedBox(height: 14),
                 _CoachNotesCard(save: save),
                 const SizedBox(height: 14),
-                _ReadinessCard(progress: save.progress),
+                _ReadinessCard(save: save),
                 const SizedBox(height: 24),
               ],
             ),
@@ -491,63 +530,97 @@ class _WeekBarsPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 
 class _SkillBarsCard extends StatelessWidget {
-  const _SkillBarsCard({required this.progress});
+  const _SkillBarsCard({required this.save});
 
-  final Map<String, int> progress;
+  final SaveData save;
 
   @override
   Widget build(BuildContext context) {
+    final trace = traceAccuracyPercent(save.skillStats);
     return _Card(
       title: 'Skill progress',
       child: Column(
         children: [
           for (final bar in kSkillBars)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: Text(
-                      bar.label,
-                      style: WqTheme.body.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: SizedBox(
-                        height: 10,
-                        child: Stack(
-                          children: [
-                            Container(color: WqColors.lines),
-                            FractionallySizedBox(
-                              widthFactor:
-                                  skillPercent(bar.keys, progress) / 100,
-                              child: Container(color: bar.color),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 44,
-                    child: Text(
-                      '${skillPercent(bar.keys, progress)}%',
-                      textAlign: TextAlign.right,
-                      style: WqTheme.body.copyWith(
-                        fontSize: 13,
-                        color: WqColors.softInk,
-                      ),
-                    ),
-                  ),
-                ],
+            _SkillBarRow(
+              label: bar.label,
+              pct: skillPercent(bar.keys, save.progress),
+              color: bar.color,
+            ),
+          // Tracing accuracy from skillStats (spec: Tracing skill bar).
+          _SkillBarRow(
+            key: const Key('skill-bar-tracing'),
+            label: 'Tracing',
+            pct: trace ?? 0,
+            color: WqColors.pink,
+            pctLabel: trace == null ? '—' : '$trace%',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkillBarRow extends StatelessWidget {
+  const _SkillBarRow({
+    super.key,
+    required this.label,
+    required this.pct,
+    required this.color,
+    this.pctLabel,
+  });
+
+  final String label;
+  final int pct;
+  final Color color;
+
+  /// Overrides the right-hand percent text (e.g. '—' when no data yet).
+  final String? pctLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: WqTheme.body.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 10,
+                child: Stack(
+                  children: [
+                    Container(color: WqColors.lines),
+                    FractionallySizedBox(
+                      widthFactor: pct / 100,
+                      child: Container(color: color),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              pctLabel ?? '$pct%',
+              textAlign: TextAlign.right,
+              style: WqTheme.body.copyWith(
+                fontSize: 13,
+                color: WqColors.softInk,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -603,44 +676,161 @@ class _CoachNotesCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ReadinessCard extends StatelessWidget {
-  const _ReadinessCard({required this.progress});
+  const _ReadinessCard({required this.save});
 
-  final Map<String, int> progress;
+  final SaveData save;
+
+  Future<void> _emailReport() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      queryParameters: {
+        'subject': 'Wonder Quest weekly report — ${save.name}',
+        'body': weeklyReportBody(save),
+      },
+    );
+    await launchUrl(uri);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pct = readinessPercent(progress);
+    final pct = readinessPercent(save.progress);
 
     return _Card(
       title: 'GSRP Readiness',
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 84,
-            height: 84,
-            child: CustomPaint(
-              key: const Key('readiness-ring'),
-              painter: _RingPainter(pct),
-              child: Center(
-                child: Text('$pct%', style: WqTheme.headingStyle(20)),
+          Row(
+            children: [
+              SizedBox(
+                width: 84,
+                height: 84,
+                child: CustomPaint(
+                  key: const Key('readiness-ring'),
+                  painter: _RingPainter(pct),
+                  child: Center(
+                    child: Text('$pct%', style: WqTheme.headingStyle(20)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  pct >= 80
+                      ? 'GSRP Ready'
+                      : 'Overall progress across all 7 skills. '
+                          '“GSRP Ready” at 80%.',
+                  key: const Key('readiness-label'),
+                  style: WqTheme.body.copyWith(
+                    fontSize: 14,
+                    fontWeight: pct >= 80 ? FontWeight.w800 : FontWeight.w400,
+                    color: pct >= 80 ? WqColors.green : WqColors.softInk,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              key: const Key('email-weekly-report'),
+              onPressed: _emailReport,
+              icon: const Icon(Icons.mail_outline, size: 18),
+              label: const Text('Email weekly report'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: WqColors.ink,
+                side: const BorderSide(color: WqColors.lines, width: 2),
+                minimumSize: const Size(64, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Text(
-              pct >= 80
-                  ? 'GSRP Ready'
-                  : 'Overall progress across all 7 skills. '
-                      '“GSRP Ready” at 80%.',
-              key: const Key('readiness-label'),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 8. Session history
+// ---------------------------------------------------------------------------
+
+/// Recent daily play sessions (from [SaveData.sessions]) plus completed game
+/// counts per land ([SaveData.landPlays]).
+class _SessionHistoryCard extends StatelessWidget {
+  const _SessionHistoryCard({required this.save});
+
+  final SaveData save;
+
+  static const _landLabels = {
+    ProgressKeys.letter: 'Letters',
+    ProgressKeys.arabic: 'Arabic',
+    ProgressKeys.number: 'Numbers',
+    ProgressKeys.math: 'Math',
+    ProgressKeys.animal: 'Animals',
+    ProgressKeys.world: 'World',
+    ProgressKeys.find: 'Finding',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = save.sessions.reversed.take(7).toList();
+    final plays = [
+      for (final e in _landLabels.entries)
+        if ((save.landPlays[e.key] ?? 0) > 0)
+          '${e.value} ${save.landPlays[e.key]}',
+    ];
+
+    return _Card(
+      title: 'Session history',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (recent.isEmpty)
+            Text(
+              'No sessions recorded yet — history appears after a few '
+              'minutes of play.',
               style: WqTheme.body.copyWith(
-                fontSize: 14,
-                fontWeight: pct >= 80 ? FontWeight.w800 : FontWeight.w400,
-                color: pct >= 80 ? WqColors.green : WqColors.softInk,
+                fontSize: 13,
+                color: WqColors.softInk,
+              ),
+            )
+          else
+            for (final session in recent)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        session.date,
+                        style: WqTheme.body.copyWith(fontSize: 13),
+                      ),
+                    ),
+                    Text(
+                      '${session.minutes} min',
+                      style: WqTheme.body.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          if (plays.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Games finished per land: ${plays.join(' · ')}',
+              style: WqTheme.body.copyWith(
+                fontSize: 12,
+                color: WqColors.softInk,
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

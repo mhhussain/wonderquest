@@ -22,20 +22,27 @@ class TraceScorer {
   final double tolerance;
 
   int _coveredCount = 0;
+  int _strokeTotal = 0;
+  int _strokeHits = 0;
 
-  /// Mark every uncovered guide point within [tolerance] of [p] as covered.
+  /// Mark every uncovered guide point within [tolerance] of [p] as covered,
+  /// and record whether [p] landed on the glyph at all (for [accuracy]).
   void addStrokePoint(Offset p) {
     final t2 = tolerance * tolerance;
+    var hit = false;
     for (var i = 0; i < _guidePoints.length; i++) {
-      if (!_covered[i]) {
-        final dx = _guidePoints[i].dx - p.dx;
-        final dy = _guidePoints[i].dy - p.dy;
-        if (dx * dx + dy * dy <= t2) {
+      final dx = _guidePoints[i].dx - p.dx;
+      final dy = _guidePoints[i].dy - p.dy;
+      if (dx * dx + dy * dy <= t2) {
+        hit = true;
+        if (!_covered[i]) {
           _covered[i] = true;
           _coveredCount++;
         }
       }
     }
+    _strokeTotal++;
+    if (hit) _strokeHits++;
   }
 
   /// Fraction of guide points covered, in [0..1].
@@ -46,4 +53,10 @@ class TraceScorer {
 
   /// True when [coverage] >= 0.85.
   bool get done => coverage >= 0.85;
+
+  /// Tracing accuracy in [0..1]: fraction of stroke points that landed
+  /// within [tolerance] of the glyph (1.0 = no scribbling outside it).
+  ///
+  /// Returns 1.0 before any stroke point is added (degenerate case).
+  double get accuracy => _strokeTotal == 0 ? 1.0 : _strokeHits / _strokeTotal;
 }
