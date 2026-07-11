@@ -20,3 +20,26 @@ App officially renamed from working title "Dino Dig" to **Wonder Quest**. Update
 
 ## [2026-07-01] plan | v1 implementation plan written
 Detailed 35-task implementation plan for Wonder Quest v1 created at `../docs/superpowers/plans/2026-07-01-wonder-quest-v1.md` (repo root `docs/`). Six phases: scaffold+Arabic-TTS spike → pure-Dart domain core (TDD) → services/shell → reusable engines → content porting from `raw/*.jsx` → seven lands → dashboard & TestFlight release readiness. Designed for execution by lower-powered subagents: each task is self-contained with exact file paths, interfaces, reading lists (wiki page + raw jsx), test-first steps, and commit points.
+
+## [2026-07-01] spike | Arabic TTS spike screen implemented (Task 3) — PENDING DEVICE VERIFICATION
+Created `app/lib/features/spike/tts_spike_screen.dart`: a debug-only screen (reachable from placeholder home) with buttons to list `ar-*` voices via `FlutterTts.getVoices`, speak `ب` and `بَطَّة` at rate 0.4 using the first available `ar-*` locale, and speak an English fallback. Results doc scaffolded at `wiki/requirements/arabic-tts-spike-result.md` (Status: needs-device-verification). Human must run on a real iPad in airplane mode to complete the go/no-go decision for Task 33 (Hoorof). Flutter analyze: 0 issues. Tests: all green.
+
+## [2026-07-03] divergence | Shape Safari uses emoji shapes (prototype behavior) instead of plan-suggested CustomPaint geometry
+The plan brief suggested drawing shapes with CustomPaint for crisp geometry, but the Flutter implementation follows prototype behavior (kShapeRounds uses emoji characters rendered via SpotScene scatter), keeping emoji-as-art consistent with every other detective game.
+
+## 2026-07-04 — Letter Pop wrong-tap divergence (plan vs prototype)
+
+The v1 plan (Task 33) says a wrong-tapped balloon "wiggles". The prototype
+(`raw/hoorof2.jsx`, `HrfPop.tap`) **removes** the wrong balloon and speaks
+"لا، حاوِل مَرَّة أُخْرَى". Per the prototype-wins rule, the Flutter app keeps the
+prototype behavior: wrong balloon is removed, `Sfx.wrong` + try-again speech,
+no score. Dead `wiggling` scaffolding removed from the balloon model.
+
+## 2026-07-05 — v1 implementation complete per plan
+
+All 35 tasks of `docs/superpowers/plans/2026-07-01-wonder-quest-v1.md` implemented:
+7 playable lands, rewards/save/audio systems, parent gate + dashboard, app icon,
+release checklist (`requirements/app-store-artifacts.md`). `flutter analyze`
+clean, full test suite green, `flutter build ios --release --no-codesign`
+succeeds. Outstanding human items: iPad Arabic TTS spike verification and the
+airplane-mode manual QA script.

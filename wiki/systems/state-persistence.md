@@ -14,7 +14,7 @@
 - Playback/position-style persistence not needed (host keeps no media position); collections/levels persist so refresh keeps place.
 
 ## Native rebuild notes
-- Replace localStorage with **shared_preferences / Hive / SQLite** (Hive recommended for speed; SQLite if querying analytics).
+- Replace localStorage with **shared_preferences / Hive / SQLite** (Hive recommended for speed; SQLite if querying analytics). *Shipped as*: a custom atomic JSON store with versioned schema migration (`app/lib/core/persistence/save_file.dart`) — meets the versioned-schema intent without a third-party dependency.
 - Define a **versioned schema + migrations** (prototype already uses `_v1` suffix).
 - Consider **multiple child profiles** for production. > ❓ single child (Hassan) vs multi-profile.
 - Parent dashboard reads aggregate fields (`week`, `minutesToday`, mastery arrays, `progress`) — ensure the data model captures **per-skill events** if richer analytics are wanted (see `specs/parent-dashboard.md`).
