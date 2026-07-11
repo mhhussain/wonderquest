@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/world_content.dart';
 import '../../../core/audio/tts_service.dart';
+import '../../../core/motion.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 
@@ -32,14 +33,21 @@ class _TravelAnimationState extends ConsumerState<TravelAnimation>
   late AnimationController _planeCtrl;
   late Animation<double> _planeX;
   bool _done = false;
+  bool _started = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    // Reduced motion: compress the ~6 s flight to a brief announce-and-land.
+    final reduce = reduceMotionOf(context);
+    final flightMs = reduce ? 900 : 6000;
 
     _planeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6),
+      duration: Duration(milliseconds: flightMs),
     )..forward();
 
     _planeX = Tween<double>(begin: -0.15, end: 1.1).animate(
@@ -49,19 +57,19 @@ class _TravelAnimationState extends ConsumerState<TravelAnimation>
     final tts = ref.read(ttsServiceProvider);
     tts.speak("Buckle up! Let's fly to ${widget.continent.name}!");
 
-    // Phase transitions (matching prototype timings)
-    Future.delayed(const Duration(milliseconds: 1700), () {
+    // Phase transitions (matching prototype timings when not reduced)
+    Future.delayed(Duration(milliseconds: reduce ? 200 : 1700), () {
       if (!mounted) return;
       setState(() => _phase = _TravelPhase.fly);
     });
 
-    Future.delayed(const Duration(milliseconds: 4600), () {
+    Future.delayed(Duration(milliseconds: reduce ? 500 : 4600), () {
       if (!mounted) return;
       setState(() => _phase = _TravelPhase.land);
       tts.speak('We have arrived in ${widget.continent.name}!');
     });
 
-    Future.delayed(const Duration(milliseconds: 6200), () {
+    Future.delayed(Duration(milliseconds: reduce ? 1000 : 6200), () {
       if (mounted && !_done) _finish();
     });
   }

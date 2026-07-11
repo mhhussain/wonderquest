@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../core/motion.dart';
 import '../domain/trace_scorer.dart';
 import '../theme/wq_colors.dart';
 
@@ -324,6 +325,9 @@ class _TraceCanvasState extends State<TraceCanvas>
   // ---------------------------------------------------------------------------
 
   void _triggerSparkle() {
+    // Reduced motion: skip the decorative sparkle burst entirely.
+    if (reduceMotionOf(context)) return;
+
     final rng = math.Random();
     const icons = ['✨', '⭐', '🌟', '💫', '🎉'];
     _particles = List<_SparkleParticle>.generate(10, (i) {

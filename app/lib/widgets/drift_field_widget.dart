@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/art.dart';
 import '../core/audio/sfx_service.dart';
+import '../core/motion.dart';
 import '../domain/drift_field.dart';
 import '../theme/wq_colors.dart';
 
@@ -118,7 +119,11 @@ class _DriftFieldWidgetState extends ConsumerState<DriftFieldWidget>
     // Cap to 50 ms to avoid large jumps after the app is backgrounded.
     final dt = (dtMicros / 1e6).clamp(0.0, 0.05);
 
-    _engine!.tick(dt);
+    // Reduced motion: items hold still (still collectable); only the
+    // player-dragged mascot moves.
+    if (!reduceMotionOf(context)) {
+      _engine!.tick(dt);
+    }
 
     final newIds = _engine!.collectAt(_mascotPos, _collectRadius);
     if (newIds.isNotEmpty) {

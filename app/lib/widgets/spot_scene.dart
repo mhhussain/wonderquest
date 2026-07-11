@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/art.dart';
 import '../core/audio/sfx_service.dart';
+import '../core/motion.dart';
 import '../domain/spot_scene_engine.dart';
 import '../theme/wq_colors.dart';
 
@@ -113,28 +114,32 @@ class _SpotSceneState extends ConsumerState<SpotScene>
     final sfx = ref.read(sfxServiceProvider);
 
     if (_engine.tap(item)) {
-      // Correct tap: record, animate, play sound.
+      // Correct tap: record, animate (unless reduced motion), play sound.
       sfx.play(Sfx.pop);
       _foundOrder.add(item.id);
 
-      final ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 350),
-      );
-      ctrl.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (mounted) {
-            setState(() => _bounce.remove(item.id));
-            ctrl.dispose();
+      if (reduceMotionOf(context)) {
+        setState(() => _found.add(item.id));
+      } else {
+        final ctrl = AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 350),
+        );
+        ctrl.addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            if (mounted) {
+              setState(() => _bounce.remove(item.id));
+              ctrl.dispose();
+            }
           }
-        }
-      });
+        });
 
-      setState(() {
-        _found.add(item.id);
-        _bounce[item.id] = ctrl;
-      });
-      ctrl.forward();
+        setState(() {
+          _found.add(item.id);
+          _bounce[item.id] = ctrl;
+        });
+        ctrl.forward();
+      }
 
       if (_engine.complete && !_done) {
         _done = true;
