@@ -9,7 +9,9 @@ import '../theme/wq_colors.dart';
 /// Wraps [child] in a fixed 1194×834 design canvas, scaled to fill the screen
 /// while preserving the aspect ratio (letterbox). Any screen rendered inside
 /// this widget lays out against exactly 1194×834 logical pixels. Letterbox
-/// areas are filled with [WqColors.ink].
+/// areas are filled with [WqColors.ink]. System insets (status bar, home
+/// indicator) sit outside the canvas via [SafeArea], so the HUD is never
+/// covered by the clock/battery overlay.
 ///
 /// Place this as the root [home:] of [MaterialApp]:
 /// ```dart
@@ -30,15 +32,17 @@ class CanvasScaler extends StatelessWidget {
   Widget build(BuildContext context) {
     return ColoredBox(
       color: WqColors.ink,
-      child: SizedBox.expand(
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.contain,
-            clipBehavior: Clip.hardEdge,
-            child: SizedBox(
-              width: designWidth,
-              height: designHeight,
-              child: child,
+      child: SafeArea(
+        child: SizedBox.expand(
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: designWidth,
+                height: designHeight,
+                child: child,
+              ),
             ),
           ),
         ),

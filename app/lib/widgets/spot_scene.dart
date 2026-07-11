@@ -160,58 +160,64 @@ class _SpotSceneState extends ConsumerState<SpotScene>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final canvasSize = Size(
-          constraints.maxWidth.isFinite ? constraints.maxWidth : 1194,
-          constraints.maxHeight.isFinite ? constraints.maxHeight : 834,
-        );
-
-        // Place items once on first layout (post-frame to avoid build mutation).
-        if (!_placed) {
-          _placed = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              setState(() => _placeItems(canvasSize));
-            }
-          });
-        }
-
-        return ColoredBox(
-          color: widget.bg,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              // Goal chips header.
-              Positioned(
-                top: 8,
-                left: 0,
-                right: 0,
-                child: _GoalChipsBar(
-                  goals: widget.goals,
-                  foundByChar: _engine.foundByChar,
-                  mode: widget.mode,
-                ),
-              ),
-
-              // Scattered items.
-              for (final item in _items) _buildItem(item),
-
-              // Wrong-tap ripple.
-              if (_missPos != null)
-                Positioned(
-                  left: _missPos!.dx - 24,
-                  top: _missPos!.dy - 24,
-                  // ignore: prefer_const_constructors
-                  child: IgnorePointer(
-                    // ignore: prefer_const_constructors
-                    child: _MissRipple(key: const ValueKey('spot-miss')),
-                  ),
-                ),
-            ],
+    // Goal bar lives above the scene canvas (not inside the Stack), so
+    // SpotSceneLayout only ever places items in the area below it and
+    // scattered items can never overlap the objective chips.
+    return ColoredBox(
+      color: widget.bg,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: _GoalChipsBar(
+              goals: widget.goals,
+              foundByChar: _engine.foundByChar,
+              mode: widget.mode,
+            ),
           ),
-        );
-      },
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final canvasSize = Size(
+                  constraints.maxWidth.isFinite ? constraints.maxWidth : 1194,
+                  constraints.maxHeight.isFinite ? constraints.maxHeight : 834,
+                );
+
+                // Place items once on first layout (post-frame to avoid
+                // build mutation).
+                if (!_placed) {
+                  _placed = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() => _placeItems(canvasSize));
+                    }
+                  });
+                }
+
+                return Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    // Scattered items.
+                    for (final item in _items) _buildItem(item),
+
+                    // Wrong-tap ripple.
+                    if (_missPos != null)
+                      Positioned(
+                        left: _missPos!.dx - 24,
+                        top: _missPos!.dy - 24,
+                        // ignore: prefer_const_constructors
+                        child: IgnorePointer(
+                          // ignore: prefer_const_constructors
+                          child: _MissRipple(key: const ValueKey('spot-miss')),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

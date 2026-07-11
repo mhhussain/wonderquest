@@ -14,7 +14,8 @@ import '../theme/wq_colors.dart';
 /// stroke coverage crosses the 85 % threshold.
 ///
 /// Guide points are extracted asynchronously by rasterising the glyph with
-/// [TextPainter] (font size 420, [WqColors.lines] colour) into a
+/// [TextPainter] (line box fitted to and centred in the 420×420 design
+/// raster via [TraceCanvas.layoutGlyph], [WqColors.lines] colour) into a
 /// [ui.PictureRecorder], converting to a [ui.Image], and sampling a 24×24
 /// grid over the bounding box. Grid cells whose pixel alpha > 0 become guide
 /// points (scaled to widget-coordinate space so that [TraceScorer.tolerance]
@@ -54,11 +55,59 @@ class TraceCanvas extends StatefulWidget {
   // Extraction helpers (exposed for unit-testing the raster-sampling logic).
   // ---------------------------------------------------------------------------
 
+  /// Side length of the square design raster the glyph is laid out into.
+  static const double rasterSide = 420;
+
+  /// Lays out [glyph] so its full text line box fits inside — and is centred
+  /// in — the [rasterSide]×[rasterSide] design raster.
+  ///
+  /// A text line box is taller than the font's em size (ascent + descent +
+  /// line gap), so painting `fontSize: 420` at [Offset.zero] lands the ink
+  /// low and left with the bottom clipped. Instead, a probe layout measures
+  /// the line-box factor, the font size is scaled so the box fits the raster,
+  /// and [origin] centres it.
+  ///
+  /// The guide painter and guide-point extraction MUST both use this helper:
+  /// guide points and visible pixels have to share one coordinate space.
+  @visibleForTesting
+  static ({TextPainter painter, Offset origin}) layoutGlyph({
+    required String glyph,
+    required String fontFamily,
+  }) {
+    TextPainter build(double fontSize) => TextPainter(
+          text: TextSpan(
+            text: glyph,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontFamily: fontFamily,
+              color: WqColors.lines,
+              height: 1.0,
+              leadingDistribution: ui.TextLeadingDistribution.even,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+    // Probe layout: measure the line box relative to the font size, then
+    // scale so the larger dimension exactly fills the raster.
+    const probeSize = 100.0;
+    final probe = build(probeSize);
+    final factor = math.max(probe.width, probe.height) / probeSize;
+    probe.dispose();
+
+    final painter = build(factor > 0 ? rasterSide / factor : rasterSide);
+    final origin = Offset(
+      (rasterSide - painter.width) / 2,
+      (rasterSide - painter.height) / 2,
+    );
+    return (painter: painter, origin: origin);
+  }
+
   /// Samples a [gridDim]×[gridDim] grid over the glyph bounding box
-  /// ([glyphW]×[glyphH]) within a [rasterSize]×[rasterSize] raster encoded
-  /// as premultiplied RGBA ([byteData]).  Returns the widget-space [Offset]
-  /// of every grid cell whose pixel alpha > 0, using [scale] = widgetW /
-  /// rasterSize.
+  /// ([glyphW]×[glyphH] anchored at ([glyphLeft], [glyphTop])) within a
+  /// [rasterSize]×[rasterSize] raster encoded as premultiplied RGBA
+  /// ([byteData]).  Returns the widget-space [Offset] of every grid cell
+  /// whose pixel alpha > 0, using [scale] = widgetW / rasterSize.
   ///
   /// This is the pure sampling step inside [_TraceCanvasState._extractGuidePoints];
   /// separating it allows unit tests to verify the logic with synthetic byteData
@@ -68,6 +117,8 @@ class TraceCanvas extends StatefulWidget {
     required ByteData byteData,
     required int rasterSize,
     required int gridDim,
+    required double glyphLeft,
+    required double glyphTop,
     required double glyphW,
     required double glyphH,
     required double scale,
@@ -75,8 +126,8 @@ class TraceCanvas extends StatefulWidget {
     final guidePoints = <Offset>[];
     for (var row = 0; row < gridDim; row++) {
       for (var col = 0; col < gridDim; col++) {
-        final cx = col * glyphW / gridDim + glyphW / (2.0 * gridDim);
-        final cy = row * glyphH / gridDim + glyphH / (2.0 * gridDim);
+        final cx = glyphLeft + col * glyphW / gridDim + glyphW / (2.0 * gridDim);
+        final cy = glyphTop + row * glyphH / gridDim + glyphH / (2.0 * gridDim);
         final px = cx.toInt().clamp(0, rasterSize - 1);
         final py = cy.toInt().clamp(0, rasterSize - 1);
         final byteIndex = (py * rasterSize + px) * 4;
@@ -158,28 +209,22 @@ class _TraceCanvasState extends State<TraceCanvas>
   // Guide-point extraction (async, done once after first layout).
   // ---------------------------------------------------------------------------
 
-  /// Rasterise the glyph at 420×420, sample a 24×24 grid, and build a
-  /// [TraceScorer] whose guide points are in widget-coordinate space.
+  /// Rasterise the glyph centred in the 420×420 design raster, sample a
+  /// 24×24 grid over its bounding box, and build a [TraceScorer] whose guide
+  /// points are in widget-coordinate space.
   Future<void> _extractGuidePoints(Size widgetSize) async {
     const rasterSize = 420;
-    const fontSize = 420.0;
     const gridDim = 24;
 
-    final tp = TextPainter(
-      text: TextSpan(
-        text: widget.glyph,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontFamily: widget.fontFamily,
-          color: WqColors.lines,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+    final glyph = TraceCanvas.layoutGlyph(
+      glyph: widget.glyph,
+      fontFamily: widget.fontFamily,
+    );
+    final tp = glyph.painter;
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    tp.paint(canvas, Offset.zero);
+    tp.paint(canvas, glyph.origin);
     final picture = recorder.endRecording();
     final image = await picture.toImage(rasterSize, rasterSize);
     final byteData = await image.toByteData(
@@ -189,29 +234,39 @@ class _TraceCanvasState extends State<TraceCanvas>
     image.dispose();
     picture.dispose();
 
-    if (byteData == null || !mounted) return;
+    if (byteData == null || !mounted) {
+      tp.dispose();
+      return;
+    }
 
     // Uniform scale matches the guide CustomPainter which does
     // canvas.scale(widgetW / 420) — both use the same transform so guide
     // points and visible pixels share one coordinate space (Finding 1 / 2).
     final scale = widgetSize.width / rasterSize;
 
-    // Sample the 24×24 grid over the glyph's bounding box, not the full
-    // 420×420 raster.  Wide or short glyphs (e.g. Arabic) get a dense grid
-    // rather than sparse points clustered in one corner (Finding 3).
+    // Sample the 24×24 grid over the glyph's bounding box (centred in the
+    // raster by layoutGlyph), not the full 420×420 raster.  Wide or short
+    // glyphs (e.g. Arabic) get a dense grid rather than sparse points
+    // clustered in one corner (Finding 3).
     final glyphW = tp.width.clamp(0.0, rasterSize.toDouble());
     final glyphH = tp.height.clamp(0.0, rasterSize.toDouble());
 
-    if (glyphW <= 0 || glyphH <= 0) return;
+    if (glyphW <= 0 || glyphH <= 0) {
+      tp.dispose();
+      return;
+    }
 
     final guidePoints = TraceCanvas.sampleGridFromRaster(
       byteData: byteData,
       rasterSize: rasterSize,
       gridDim: gridDim,
+      glyphLeft: glyph.origin.dx,
+      glyphTop: glyph.origin.dy,
       glyphW: glyphW,
       glyphH: glyphH,
       scale: scale,
     );
+    tp.dispose();
 
     // Skip creating a scorer when the glyph rendered no visible pixels
     // (e.g. font not loaded in tests). onCovered will never fire in that case.
@@ -355,9 +410,10 @@ class _TraceCanvasState extends State<TraceCanvas>
 // Guide glyph widget
 // ---------------------------------------------------------------------------
 
-/// Renders the guide glyph via the SAME [TextPainter] transform used by
-/// [_TraceCanvasState._extractGuidePoints]: a uniform scale of
-/// `widgetWidth / 420` with the origin at (0, 0) and [TextDirection.ltr].
+/// Renders the guide glyph via the SAME layout used by
+/// [_TraceCanvasState._extractGuidePoints]: [TraceCanvas.layoutGlyph]
+/// (line box fitted to and centred in the 420 design raster) drawn with a
+/// uniform scale of `widgetWidth / 420`.
 ///
 /// Keeping both paths identical by construction ensures that guide points
 /// and visible pixels share one coordinate space (Findings 1 & 2).
@@ -372,65 +428,63 @@ class _GlyphGuide extends StatefulWidget {
 }
 
 class _GlyphGuideState extends State<_GlyphGuide> {
-  late TextPainter _tp;
+  late ({TextPainter painter, Offset origin}) _glyph;
 
   @override
   void initState() {
     super.initState();
-    _tp = _buildTextPainter();
+    _glyph = _layout();
   }
 
   @override
   void didUpdateWidget(_GlyphGuide old) {
     super.didUpdateWidget(old);
     if (old.glyph != widget.glyph || old.fontFamily != widget.fontFamily) {
-      _tp.dispose();
-      _tp = _buildTextPainter();
+      _glyph.painter.dispose();
+      _glyph = _layout();
     }
   }
 
   @override
   void dispose() {
-    _tp.dispose();
+    _glyph.painter.dispose();
     super.dispose();
   }
 
-  TextPainter _buildTextPainter() => TextPainter(
-        text: TextSpan(
-          text: widget.glyph,
-          style: TextStyle(
-            fontSize: 420,
-            fontFamily: widget.fontFamily,
-            color: WqColors.lines,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
+  ({TextPainter painter, Offset origin}) _layout() => TraceCanvas.layoutGlyph(
+        glyph: widget.glyph,
+        fontFamily: widget.fontFamily,
+      );
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _GlyphGuidePainter(_tp));
+    return CustomPaint(
+      painter: _GlyphGuidePainter(_glyph.painter, _glyph.origin),
+    );
   }
 }
 
 /// Paints the guide glyph with a uniform [canvas.scale] of [size.width / 420]
-/// anchored at the origin — identical to the transform applied during raster
-/// extraction — so guide points and visible pixels share a coordinate space.
+/// at the centring origin from [TraceCanvas.layoutGlyph] — identical to the
+/// transform applied during raster extraction — so guide points and visible
+/// pixels share a coordinate space.
 class _GlyphGuidePainter extends CustomPainter {
-  const _GlyphGuidePainter(this._tp);
+  const _GlyphGuidePainter(this._tp, this._origin);
 
   final TextPainter _tp;
+  final Offset _origin;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / 420);
-    _tp.paint(canvas, Offset.zero);
+    canvas.scale(size.width / TraceCanvas.rasterSide);
+    _tp.paint(canvas, _origin);
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_GlyphGuidePainter old) => old._tp != _tp;
+  bool shouldRepaint(_GlyphGuidePainter old) =>
+      old._tp != _tp || old._origin != _origin;
 }
 
 // ---------------------------------------------------------------------------

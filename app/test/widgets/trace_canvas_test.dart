@@ -67,6 +67,8 @@ void main() {
           byteData: byteData,
           rasterSize: rasterSize,
           gridDim: gridDim,
+          glyphLeft: 0,
+          glyphTop: 0,
           glyphW: rasterSize.toDouble(),
           glyphH: rasterSize.toDouble(),
           scale: scale,
@@ -113,6 +115,8 @@ void main() {
           byteData: byteData,
           rasterSize: rasterSize,
           gridDim: gridDim,
+          glyphLeft: 0,
+          glyphTop: 0,
           glyphW: 100.0, // bounding-box width, not full raster
           glyphH: 200.0,
           scale: scale,
@@ -124,6 +128,74 @@ void main() {
           expect(p.dx, lessThanOrEqualTo(100 * scale + 1e-9));
           expect(p.dy, lessThanOrEqualTo(200 * scale + 1e-9));
         }
+      },
+    );
+
+    test(
+      'sampleGridFromRaster: offset bounding box → points shifted by the '
+      'box origin (scaled)',
+      () {
+        // Opaque block at raster (100..200, 150..250); bounding box anchored
+        // exactly there. Every returned point must land inside the scaled box.
+        const rasterSize = 420;
+        const gridDim = 24;
+        const widgetW = 400.0;
+        final data = Uint8List(rasterSize * rasterSize * 4);
+        for (var row = 150; row < 250; row++) {
+          for (var col = 100; col < 200; col++) {
+            data[(row * rasterSize + col) * 4 + 3] = 255;
+          }
+        }
+        final byteData = data.buffer.asByteData();
+        const scale = widgetW / rasterSize;
+
+        final points = TraceCanvas.sampleGridFromRaster(
+          byteData: byteData,
+          rasterSize: rasterSize,
+          gridDim: gridDim,
+          glyphLeft: 100,
+          glyphTop: 150,
+          glyphW: 100,
+          glyphH: 100,
+          scale: scale,
+        );
+
+        expect(points.length, equals(gridDim * gridDim),
+            reason: 'box exactly covers the opaque block → all cells hit');
+        for (final p in points) {
+          expect(p.dx, greaterThanOrEqualTo(100 * scale));
+          expect(p.dx, lessThanOrEqualTo(200 * scale));
+          expect(p.dy, greaterThanOrEqualTo(150 * scale));
+          expect(p.dy, lessThanOrEqualTo(250 * scale));
+        }
+      },
+    );
+
+    // -------------------------------------------------------------------------
+    // layoutGlyph — line box fitted to and centred in the 420 raster
+    // -------------------------------------------------------------------------
+
+    test(
+      'layoutGlyph: line box fits the 420 raster and is centred',
+      () {
+        final glyph = TraceCanvas.layoutGlyph(glyph: 'B', fontFamily: 'Baloo2');
+        final tp = glyph.painter;
+        const raster = TraceCanvas.rasterSide;
+
+        // The larger line-box dimension fills the raster (within layout
+        // rounding); nothing overflows.
+        final maxDim = tp.width > tp.height ? tp.width : tp.height;
+        expect(maxDim, lessThanOrEqualTo(raster + 1.0));
+        expect(maxDim, greaterThan(raster * 0.9),
+            reason: 'glyph should be scaled up to nearly fill the raster');
+
+        // Centred: origin puts equal margins on both axes.
+        expect(glyph.origin.dx, closeTo((raster - tp.width) / 2, 1e-6));
+        expect(glyph.origin.dy, closeTo((raster - tp.height) / 2, 1e-6));
+        expect(glyph.origin.dx, greaterThanOrEqualTo(-0.5));
+        expect(glyph.origin.dy, greaterThanOrEqualTo(-0.5));
+
+        tp.dispose();
       },
     );
 
