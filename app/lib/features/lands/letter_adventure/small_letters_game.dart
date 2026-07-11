@@ -12,6 +12,7 @@ import '../../../domain/reward.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Letter Adventure — Game 2: Small Letters abc.
 ///
@@ -59,7 +60,7 @@ class _SmallLettersScreenState extends ConsumerState<SmallLettersScreen> {
           xp: 30,
           egg: true,
           sticker: '🐣',
-          progressKey: 'letter',
+          progressKey: ProgressKeys.letter,
           progressTo: 65,
         ),
       );

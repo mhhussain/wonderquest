@@ -30,6 +30,14 @@ abstract final class WqTheme {
         color: WqColors.ink,
       );
 
+  /// Nunito body style at the given [size].
+  static TextStyle bodyStyle(double size, {Color color = WqColors.ink}) =>
+      TextStyle(
+        fontFamily: 'Nunito',
+        fontSize: size,
+        color: color,
+      );
+
   // Convenience text style aliases.
   static const TextStyle heading = TextStyle(
     fontFamily: 'Baloo2',

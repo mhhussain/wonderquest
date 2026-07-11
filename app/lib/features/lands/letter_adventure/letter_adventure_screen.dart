@@ -150,7 +150,7 @@ class _GameCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x22000000),
+              color: WqColors.shadow,
               blurRadius: 6,
               offset: Offset(0, 3),
             ),

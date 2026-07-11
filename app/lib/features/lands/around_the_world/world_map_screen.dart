@@ -122,7 +122,7 @@ class _WorldMapPainter extends CustomPainter {
       ..shader = const RadialGradient(
         center: Alignment(0, -0.2),
         radius: 0.75,
-        colors: [Color(0xFFBFE8F7), Color(0xFF8FCDEA)],
+        colors: [WqColors.mapSkyLight, WqColors.mapSkyDark],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     canvas.drawRRect(
@@ -164,7 +164,7 @@ class _WorldMapPainter extends CustomPainter {
 
       // Drop shadow
       final shadowPaint = Paint()
-        ..color = const Color(0x521C5A78)
+        ..color = WqColors.mapOutline
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawPath(scaledPath.shift(const Offset(0, 3)), shadowPaint);
 

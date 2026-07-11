@@ -434,7 +434,7 @@ class _MissRippleState extends State<_MissRipple>
         opacity: _opacity.value,
         child: child,
       ),
-      child: const Text('👀', style: TextStyle(fontSize: 32)),
+      child: Art.glyph('eyes', size: 32),
     );
   }
 }

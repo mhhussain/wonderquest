@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../content/arabic_letters.dart';
+import '../../core/art.dart';
+import '../../core/progress_keys.dart';
 import '../../core/persistence/save_data.dart';
 import '../../core/save_controller.dart';
 import '../../theme/wq_colors.dart';
@@ -19,12 +21,12 @@ const _kAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 /// Display order + labels for the skill progress bars. `keys` with two
 /// entries are averaged (Animals & World).
 const kSkillBars = <({String label, List<String> keys, Color color})>[
-  (label: 'Letters', keys: ['letter'], color: WqColors.orange),
-  (label: 'Arabic', keys: ['arabic'], color: WqColors.coral),
-  (label: 'Numbers', keys: ['number'], color: WqColors.teal),
-  (label: 'Math', keys: ['math'], color: WqColors.sky),
-  (label: 'Animals & World', keys: ['animal', 'world'], color: WqColors.grape),
-  (label: 'Finding & Focus', keys: ['find'], color: WqColors.green),
+  (label: 'Letters', keys: [ProgressKeys.letter], color: WqColors.orange),
+  (label: 'Arabic', keys: [ProgressKeys.arabic], color: WqColors.coral),
+  (label: 'Numbers', keys: [ProgressKeys.number], color: WqColors.teal),
+  (label: 'Math', keys: [ProgressKeys.math], color: WqColors.sky),
+  (label: 'Animals & World', keys: [ProgressKeys.animal, ProgressKeys.world], color: WqColors.grape),
+  (label: 'Finding & Focus', keys: [ProgressKeys.find], color: WqColors.green),
 ];
 
 /// Letter pairs young readers commonly confuse; flagged in coach notes when
@@ -40,9 +42,9 @@ int skillPercent(List<String> keys, Map<String, int> progress) {
 
 /// Overall readiness: mean of all 7 progress keys, 0–100.
 int readinessPercent(Map<String, int> progress) {
-  const keys = ['letter', 'arabic', 'number', 'math', 'animal', 'world', 'find'];
-  final sum = keys.fold<int>(0, (a, k) => a + (progress[k] ?? 0));
-  return (sum / keys.length).round().clamp(0, 100);
+  final sum =
+      ProgressKeys.all.fold<int>(0, (a, k) => a + (progress[k] ?? 0));
+  return (sum / ProgressKeys.all.length).round().clamp(0, 100);
 }
 
 /// How many of the 28 Arabic letters count as mastered, derived from the
@@ -133,7 +135,8 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _AlphabetCard(save: save),
                 const SizedBox(height: 14),
-                _ArabicCard(arabicPct: save.progress['arabic'] ?? 0),
+                _ArabicCard(
+                    arabicPct: save.progress[ProgressKeys.arabic] ?? 0),
                 const SizedBox(height: 14),
                 _WeekCard(week: save.week),
                 const SizedBox(height: 14),
@@ -223,14 +226,18 @@ class _TopStatsRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        stat('⏱️ Today', '${save.minutesToday} min', 'Goal: 20 min'),
+        stat('${Art.emoji('timer')} Today', '${save.minutesToday} min',
+            'Goal: 20 min'),
         const SizedBox(width: 12),
-        stat('🔥 Streak', '${save.streak} days', 'Keep it going!'),
+        stat('${Art.emoji('streak')} Streak', '${save.streak} days',
+            'Keep it going!'),
         const SizedBox(width: 12),
-        stat('🔤 Letters', '${save.lettersMastered.length}/26',
+        stat('${Art.emoji('land-letter')} Letters',
+            '${save.lettersMastered.length}/26',
             '${save.lettersLearning.length} in progress'),
         const SizedBox(width: 12),
-        stat('🔢 Numbers', '${save.numbersMastered.length}/20', 'Mastered'),
+        stat('${Art.emoji('land-number')} Numbers',
+            '${save.numbersMastered.length}/20', 'Mastered'),
       ],
     );
   }

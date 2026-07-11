@@ -14,6 +14,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
 import 'station_theatrics.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Pre-computed pools — one per station, deterministic seed
@@ -50,37 +51,37 @@ Reward _rewardFor(MathStation station) {
     case 'zoo':
       return const Reward(
         stars: 3, xp: 28, egg: true,
-        progressKey: 'math', progressTo: 50,
+        progressKey: ProgressKeys.math, progressTo: 50,
       );
     case 'snack':
       return const Reward(
         stars: 3, xp: 30, egg: true,
-        progressKey: 'math', progressTo: 60,
+        progressKey: ProgressKeys.math, progressTo: 60,
       );
     case 'gems':
       return const Reward(
         stars: 3, xp: 30, egg: true,
-        progressKey: 'math', progressTo: 60,
+        progressKey: ProgressKeys.math, progressTo: 60,
       );
     case 'eggs':
       return const Reward(
         stars: 3, xp: 30, egg: true,
-        progressKey: 'math', progressTo: 55,
+        progressKey: ProgressKeys.math, progressTo: 55,
       );
     case 'cookie':
       return const Reward(
         stars: 3, xp: 30, egg: true,
-        progressKey: 'math', progressTo: 55,
+        progressKey: ProgressKeys.math, progressTo: 55,
       );
     case 'morles':
       return const Reward(
         stars: 3, xp: 26, sticker: '⚖️',
-        progressKey: 'math', progressTo: 50,
+        progressKey: ProgressKeys.math, progressTo: 50,
       );
     default:
       return const Reward(
         stars: 3, xp: 26,
-        progressKey: 'math', progressTo: 50,
+        progressKey: ProgressKeys.math, progressTo: 50,
       );
   }
 }

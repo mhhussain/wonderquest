@@ -13,6 +13,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 /// Hoorof — Game 5: Find the Letter.
 ///
@@ -103,7 +104,7 @@ class _FindLetterScreenState extends ConsumerState<FindLetterScreen> {
         xp: 28,
         egg: true,
         sticker: '🔎',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {

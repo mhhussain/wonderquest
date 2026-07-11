@@ -13,6 +13,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/trace_canvas.dart';
+import '../../../core/progress_keys.dart';
 
 /// Letter Adventure — Game 1: Big Letters.
 ///
@@ -38,7 +39,7 @@ class _BigLettersScreenState extends ConsumerState<BigLettersScreen> {
     await showRewardModal(
       context,
       ref,
-      const Reward(stars: 3, xp: 20, progressKey: 'letter', progressTo: 55),
+      const Reward(stars: 3, xp: 20, progressKey: ProgressKeys.letter, progressTo: 55),
       onPlayAgain: () {
         if (mounted) setState(() => _gameIndex = null);
       },

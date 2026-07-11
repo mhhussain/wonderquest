@@ -133,7 +133,7 @@ class _SeaCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x22000000),
+              color: WqColors.shadow,
               blurRadius: 8,
               offset: Offset(0, 4),
             ),

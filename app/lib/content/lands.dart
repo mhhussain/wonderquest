@@ -8,6 +8,7 @@ import '../features/lands/math_lab/math_lab_screen.dart';
 import '../features/lands/number_kingdom/number_kingdom_screen.dart';
 import '../features/lands/spot_me/spot_me_screen.dart';
 import '../theme/wq_colors.dart';
+import '../core/progress_keys.dart';
 
 /// A single land entry in the 13-land Expedition Map registry.
 ///
@@ -104,7 +105,7 @@ final List<Land> kLands = [
     emojiKey: 'land-letter',
     color: WqColors.orange,
     playable: true,
-    progressKey: 'letter',
+    progressKey: ProgressKeys.letter,
     builder: (_) => const LetterAdventureScreen(),
   ),
   Land(
@@ -114,7 +115,7 @@ final List<Land> kLands = [
     emojiKey: 'land-hoorof',
     color: WqColors.teal,
     playable: true,
-    progressKey: 'arabic',
+    progressKey: ProgressKeys.arabic,
     builder: (_) => const HoroofScreen(),
   ),
   Land(
@@ -124,7 +125,7 @@ final List<Land> kLands = [
     emojiKey: 'land-number',
     color: WqColors.teal,
     playable: true,
-    progressKey: 'number',
+    progressKey: ProgressKeys.number,
     builder: (_) => const NumberKingdomScreen(),
   ),
   Land(
@@ -134,7 +135,7 @@ final List<Land> kLands = [
     emojiKey: 'land-math',
     color: WqColors.green,
     playable: true,
-    progressKey: 'math',
+    progressKey: ProgressKeys.math,
     builder: (_) => const MathLabScreen(),
   ),
   Land(
@@ -144,7 +145,7 @@ final List<Land> kLands = [
     emojiKey: 'land-animal',
     color: WqColors.grape,
     playable: true,
-    progressKey: 'animal',
+    progressKey: ProgressKeys.animal,
     builder: (_) => const AnimalPlanetScreen(),
   ),
   Land(
@@ -154,7 +155,7 @@ final List<Land> kLands = [
     emojiKey: 'land-world',
     color: WqColors.sky,
     playable: true,
-    progressKey: 'world',
+    progressKey: ProgressKeys.world,
     builder: (_) => const AroundTheWorldScreen(),
   ),
   Land(
@@ -164,7 +165,7 @@ final List<Land> kLands = [
     emojiKey: 'land-find',
     color: WqColors.yellow,
     playable: true,
-    progressKey: 'find',
+    progressKey: ProgressKeys.find,
     builder: (_) => const SpotMeScreen(),
   ),
   // ── Locked lands ──────────────────────────────────────────────────────────

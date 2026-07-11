@@ -13,6 +13,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 /// All legal dots codes. Used to generate wrong options.
 const _kAllDotCodes = ['1a', '2a', '3a', '1b', '2b', '0'];
@@ -165,7 +166,7 @@ class _ShapeBuilderScreenState extends ConsumerState<ShapeBuilderScreen> {
         stars: 3,
         xp: 26,
         sticker: '🖍️',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {

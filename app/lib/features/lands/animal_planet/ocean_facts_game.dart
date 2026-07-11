@@ -10,6 +10,7 @@ import '../../../domain/reward.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Ocean Facts activity: tap 8 sea creatures to learn amazing facts.
 ///
@@ -75,7 +76,7 @@ class _OceanFactsScreenState extends ConsumerState<OceanFactsScreen> {
         xp: 26,
         egg: true,
         sticker: '🐙',
-        progressKey: 'animal',
+        progressKey: ProgressKeys.animal,
         progressTo: 70,
       ),
       onPlayAgain: () {

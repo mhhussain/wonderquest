@@ -23,39 +23,38 @@ const kHrfGameIds = [
   'hrf-safari',
 ];
 
+/// Whether the Arabic letter at index [letterIndex] counts toward progress:
+/// interacted with in ≥ 3 distinct Hoorof game types. Shared threshold for
+/// [arabicProgressTo] and [clusterProgress].
+bool letterEngaged(int letterIndex, Map<String, List<bool>> levels) {
+  var count = 0;
+  for (final id in kHrfGameIds) {
+    final lst = levels[id];
+    if (lst != null && letterIndex < lst.length && lst[letterIndex]) count++;
+  }
+  return count >= 3;
+}
+
 /// Computes the `arabic` progress-to value (0–100) from the save levels map.
 ///
-/// A letter counts toward progress when it has been interacted with in ≥ 3
-/// distinct Hoorof game types.
+/// A letter counts toward progress when [letterEngaged].
 ///
 /// Formula: `n / 28 × 100` rounded to the nearest integer, clamped to 0–100.
 int arabicProgressTo(Map<String, List<bool>> levels) {
   var n = 0;
   for (var i = 0; i < kArabicLetters.length; i++) {
-    var count = 0;
-    for (final id in kHrfGameIds) {
-      final lst = levels[id];
-      if (lst != null && i < lst.length && lst[i]) count++;
-    }
-    if (count >= 3) n++;
+    if (letterEngaged(i, levels)) n++;
   }
   return (n * 100 / kArabicLetters.length).round().clamp(0, 100);
 }
 
-/// Number of letters in cluster [clusterIndex] that count toward progress —
-/// i.e. interacted with in ≥ 3 distinct Hoorof game types (same threshold as
-/// [arabicProgressTo]). Ranges 0..cluster length.
+/// Number of letters in cluster [clusterIndex] that count toward progress
+/// ([letterEngaged]). Ranges 0..cluster length.
 int clusterProgress(int clusterIndex, Map<String, List<bool>> levels) {
   var n = 0;
   for (final g in kArabicClusters[clusterIndex]) {
     final i = kArabicLetters.indexWhere((l) => l.g == g);
-    if (i < 0) continue;
-    var count = 0;
-    for (final id in kHrfGameIds) {
-      final lst = levels[id];
-      if (lst != null && i < lst.length && lst[i]) count++;
-    }
-    if (count >= 3) n++;
+    if (i >= 0 && letterEngaged(i, levels)) n++;
   }
   return n;
 }

@@ -14,6 +14,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Pre-computed 90-item missing-number round pool (deterministic seed).
 final _kMissingPool = genMissingRounds(90, Random('missing-pool'.hashCode));
@@ -49,7 +50,7 @@ class _MissingNumberScreenState extends ConsumerState<MissingNumberScreen> {
         stars: 3,
         xp: 26,
         sticker: '\u{1F522}',
-        progressKey: 'number',
+        progressKey: ProgressKeys.number,
         progressTo: 50,
       ),
       onPlayAgain: () {

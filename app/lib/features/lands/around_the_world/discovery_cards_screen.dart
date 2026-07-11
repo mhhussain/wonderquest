@@ -10,6 +10,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/flip_card.dart';
 import '../../../widgets/reward_modal.dart';
 import 'mini_games.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Discovery Deck screen
@@ -173,7 +174,7 @@ class _DiscoveryDeckScreenState extends ConsumerState<DiscoveryDeckScreen> {
         xp: 18,
         sticker: card.sticker,
         silent: true,
-        progressKey: 'world',
+        progressKey: ProgressKeys.world,
       ),
     );
 

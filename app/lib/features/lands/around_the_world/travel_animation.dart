@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../content/world_content.dart';
 import '../../../core/audio/tts_service.dart';
+import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 
 /// Travel phases matching the raw/world.jsx Travel component.
@@ -96,10 +97,10 @@ class _TravelAnimationState extends ConsumerState<TravelAnimation>
                     colors: [
                       _phase == _TravelPhase.land
                           ? c.color2.withValues(alpha: 0.8)
-                          : const Color(0xFF6DD5FA),
+                          : WqColors.oceanSurface,
                       _phase == _TravelPhase.land
                           ? c.color.withValues(alpha: 0.9)
-                          : const Color(0xFF2980B9),
+                          : WqColors.oceanDeep,
                     ],
                   ),
                 ),

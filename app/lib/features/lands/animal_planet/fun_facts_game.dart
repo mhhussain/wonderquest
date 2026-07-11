@@ -13,6 +13,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/flip_card.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Fun animal facts: a grid of flip cards that reveal facts on tap.
 ///
@@ -73,7 +74,7 @@ class _FunFactsScreenState extends ConsumerState<FunFactsScreen> {
         stars: 3,
         xp: 24,
         egg: true,
-        progressKey: 'animal',
+        progressKey: ProgressKeys.animal,
         progressTo: 60,
       ),
       onPlayAgain: () {

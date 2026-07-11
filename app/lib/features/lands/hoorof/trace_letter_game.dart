@@ -12,6 +12,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/trace_canvas.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 /// Hoorof — Game 2: Trace the Letter.
 ///
@@ -131,7 +132,7 @@ class _TraceLetterScreenState extends ConsumerState<TraceLetterScreen> {
         stars: 3,
         xp: 22,
         sticker: '✏️',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {

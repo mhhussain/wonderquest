@@ -10,6 +10,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import 'spot_me_screen.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -232,7 +233,7 @@ class _SocksScreenState extends ConsumerState<SocksScreen> {
         xp: 28,
         egg: true,
         sticker: title ?? '🧦',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 55,
       ),
       onPlayAgain: () {

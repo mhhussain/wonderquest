@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/art.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
+import '../../../widgets/land_game_card.dart';
 import 'find_letter_game.dart';
 import 'hear_match_game.dart';
 import 'learn_letter_game.dart';
@@ -154,9 +155,12 @@ class HoroofScreen extends ConsumerWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.25,
                 children: _kCards.map((card) {
-                  return _GameCard(
+                  return LandGameCard(
                     key: Key('hrf-${card.id}'),
-                    spec: card,
+                    title: card.title,
+                    subtitle: card.sub,
+                    icon: card.emoji,
+                    color: card.color,
                     onTap: () {
                       Navigator.of(context).push<void>(
                         MaterialPageRoute<void>(
@@ -175,67 +179,3 @@ class HoroofScreen extends ConsumerWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Game card tile
-// ---------------------------------------------------------------------------
-
-class _GameCard extends StatelessWidget {
-  const _GameCard({
-    super.key,
-    required this.spec,
-    required this.onTap,
-  });
-
-  final _CardSpec spec;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: spec.color,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(spec.emoji, style: const TextStyle(fontSize: 28)),
-              const SizedBox(height: 4),
-              Text(
-                spec.title,
-                maxLines: 2,
-                style: const TextStyle(
-                  fontFamily: 'Baloo2',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                spec.sub,
-                maxLines: 1,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 11,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

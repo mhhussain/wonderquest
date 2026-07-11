@@ -10,6 +10,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // FindMissionScreen
@@ -77,7 +78,7 @@ class _FindMissionScreenState extends ConsumerState<FindMissionScreen> {
         xp: 60,
         egg: true,
         sticker: c.badge,
-        progressKey: 'world',
+        progressKey: ProgressKeys.world,
         progressTo: progressTo,
       ),
     );

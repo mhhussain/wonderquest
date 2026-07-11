@@ -1,3 +1,4 @@
+import '../progress_keys.dart';
 import 'package:flutter/foundation.dart';
 
 /// Represents the world state in a save file.
@@ -166,13 +167,13 @@ class SaveData {
       lettersLearning: [],
       numbersMastered: [],
       progress: {
-        'letter': 0,
-        'arabic': 0,
-        'number': 0,
-        'math': 0,
-        'animal': 0,
-        'world': 0,
-        'find': 0,
+        ProgressKeys.letter: 0,
+        ProgressKeys.arabic: 0,
+        ProgressKeys.number: 0,
+        ProgressKeys.math: 0,
+        ProgressKeys.animal: 0,
+        ProgressKeys.world: 0,
+        ProgressKeys.find: 0,
       },
       minutesToday: 0,
       lastPlayedDate: '',
@@ -266,13 +267,13 @@ class SaveData {
     // Build progress with defaults for missing keys
     final progressJson = json['progress'] as Map<String, dynamic>? ?? {};
     final progress = {
-      'letter': (progressJson['letter'] as int?) ?? 0,
-      'arabic': (progressJson['arabic'] as int?) ?? 0,
-      'number': (progressJson['number'] as int?) ?? 0,
-      'math': (progressJson['math'] as int?) ?? 0,
-      'animal': (progressJson['animal'] as int?) ?? 0,
-      'world': (progressJson['world'] as int?) ?? 0,
-      'find': (progressJson['find'] as int?) ?? 0,
+      ProgressKeys.letter: (progressJson[ProgressKeys.letter] as int?) ?? 0,
+      ProgressKeys.arabic: (progressJson[ProgressKeys.arabic] as int?) ?? 0,
+      ProgressKeys.number: (progressJson[ProgressKeys.number] as int?) ?? 0,
+      ProgressKeys.math: (progressJson[ProgressKeys.math] as int?) ?? 0,
+      ProgressKeys.animal: (progressJson[ProgressKeys.animal] as int?) ?? 0,
+      ProgressKeys.world: (progressJson[ProgressKeys.world] as int?) ?? 0,
+      ProgressKeys.find: (progressJson[ProgressKeys.find] as int?) ?? 0,
     };
 
     // Build week with defaults

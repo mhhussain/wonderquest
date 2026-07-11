@@ -13,6 +13,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Card model
@@ -340,7 +341,7 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
         xp: 30,
         egg: true,
         sticker: '🧩',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {

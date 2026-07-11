@@ -14,6 +14,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Letter Adventure — Game 5: Reading Words.
 ///
@@ -47,7 +48,7 @@ class _ReadingWordsScreenState extends ConsumerState<ReadingWordsScreen> {
         xp: 40,
         egg: true,
         sticker: '📖',
-        progressKey: 'letter',
+        progressKey: ProgressKeys.letter,
         progressTo: 90,
       ),
       onPlayAgain: () {

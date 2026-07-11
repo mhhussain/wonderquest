@@ -14,6 +14,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Pre-computed ordered pool for the match game (kMatchOrder → EnglishLetter).
 final _matchPool = kMatchOrder
@@ -51,7 +52,7 @@ class _MatchLettersScreenState extends ConsumerState<MatchLettersScreen> {
         xp: 36,
         egg: true,
         sticker: '🏅',
-        progressKey: 'letter',
+        progressKey: ProgressKeys.letter,
         progressTo: 80,
       ),
       onPlayAgain: () {

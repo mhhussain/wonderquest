@@ -5,6 +5,7 @@ import '../../../content/math_content.dart';
 import '../../../core/art.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
+import '../../../widgets/land_game_card.dart';
 import 'math_station_game.dart';
 
 /// Entry screen for Little Math Lab — shows the 6 themed station cards.
@@ -48,9 +49,17 @@ class MathLabScreen extends ConsumerWidget {
                 childAspectRatio: 1.4,
                 children: kMathStations
                     .map(
-                      (s) => _StationCard(
+                      (s) => LandGameCard(
                         key: Key('station-${s.id}'),
-                        station: s,
+                        title: s.title,
+                        subtitle: _stationSub(s),
+                        icon: s.emoji,
+                        color: s.color,
+                        iconSize: 36,
+                        titleSize: 16,
+                        subtitleSize: 12,
+                        radius: 20,
+                        padding: 14,
                         onTap: () => Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
                             builder: (_) => MathStationScreen(station: s),
@@ -68,74 +77,12 @@ class MathLabScreen extends ConsumerWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Station card tile
-// ---------------------------------------------------------------------------
-
-class _StationCard extends StatelessWidget {
-  const _StationCard({
-    super.key,
-    required this.station,
-    required this.onTap,
-  });
-
-  final MathStation station;
-  final VoidCallback onTap;
-
-  String get _sub {
-    switch (station.type) {
-      case MathType.add:     return 'Adding';
-      case MathType.sub:     return 'Taking away';
-      case MathType.count:   return 'Counting';
-      case MathType.compare: return 'More or less';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: station.color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(station.emoji, style: const TextStyle(fontSize: 36)),
-              const SizedBox(height: 6),
-              Text(
-                station.title,
-                style: const TextStyle(
-                  fontFamily: 'Baloo2',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                _sub,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+/// Subtitle line for a station card, from its math type.
+String _stationSub(MathStation station) {
+  switch (station.type) {
+    case MathType.add:     return 'Adding';
+    case MathType.sub:     return 'Taking away';
+    case MathType.count:   return 'Counting';
+    case MathType.compare: return 'More or less';
   }
 }

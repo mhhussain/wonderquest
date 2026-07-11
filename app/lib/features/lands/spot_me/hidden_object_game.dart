@@ -12,6 +12,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
 import 'spot_me_screen.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Hidden Object Hunt
@@ -77,7 +78,7 @@ class _HiddenObjectScreenState extends ConsumerState<HiddenObjectScreen> {
         xp: 30,
         egg: true,
         sticker: title ?? '🔍',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 60,
       ),
       onPlayAgain: () {
@@ -195,7 +196,7 @@ class _AnimalTrackerScreenState extends ConsumerState<AnimalTrackerScreen> {
         xp: 28,
         egg: true,
         sticker: title ?? '🐾',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 55,
       ),
       onPlayAgain: () {

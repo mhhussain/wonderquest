@@ -15,6 +15,7 @@ class Art {
     'sound-off': '🔇',
     'map': '🗺',
     'play': '▶',
+    'timer': '⏱️',
     // Land icons (one per expedition-map land)
     'land-letter': '🔤',
     'land-hoorof': '🐪',
@@ -36,6 +37,8 @@ class Art {
     'bag': '🎒',
     'sparkle': '✨',
     'close': '✕',
+    'eyes': '👀',
+    'trophy': '🏆',
     // Dino roster (each hatchable dinosaur)
     'dino-bronto': '🦕',
     'dino-rexy-jr': '🦖',

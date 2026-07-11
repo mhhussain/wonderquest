@@ -14,6 +14,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Pre-computed 90-item count round pool (deterministic seed).
 final _kCountPool = genCountRounds(90, Random('count-pool'.hashCode));
@@ -48,7 +49,7 @@ class _CountMatchScreenState extends ConsumerState<CountMatchScreen> {
         stars: 3,
         xp: 28,
         egg: true,
-        progressKey: 'number',
+        progressKey: ProgressKeys.number,
         progressTo: 55,
       ),
       onPlayAgain: () {

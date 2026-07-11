@@ -11,6 +11,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
 import 'spot_me_screen.dart';
+import '../../../core/progress_keys.dart';
 
 /// Count It If You Can: presents SpotScene in [SpotMode.count] mode.
 ///
@@ -73,7 +74,7 @@ class _CountItScreenState extends ConsumerState<CountItScreen> {
         stars: 3,
         xp: 26,
         sticker: title ?? '🔢',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 50,
       ),
       onPlayAgain: () {

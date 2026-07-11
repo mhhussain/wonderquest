@@ -265,7 +265,7 @@ class TreasureHuntScene extends StatelessWidget {
                   '➕',
                   style: TextStyle(
                     fontSize: 30,
-                    color: Color(0xFF7a4e1d),
+                    color: WqColors.woodDeep,
                   ),
                 ),
               ),
@@ -310,14 +310,14 @@ class _TreasureChest extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 500),
       decoration: BoxDecoration(
-        color: const Color(0xFFC67C2A), // warm wood brown
+        color: WqColors.wood,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
           bottomLeft: Radius.circular(8),
           bottomRight: Radius.circular(8),
         ),
-        border: Border.all(color: const Color(0xFF8B5E0A), width: 3),
+        border: Border.all(color: WqColors.woodDark, width: 3),
       ),
       child: Stack(
         children: [
@@ -338,14 +338,14 @@ class _TreasureChest extends StatelessWidget {
             left: 18,
             top: 0,
             bottom: 0,
-            child: Container(width: 8, color: const Color(0xFFFFD700)),
+            child: Container(width: 8, color: WqColors.gold),
           ),
           // Right gold strap
           Positioned(
             right: 18,
             top: 0,
             bottom: 0,
-            child: Container(width: 8, color: const Color(0xFFFFD700)),
+            child: Container(width: 8, color: WqColors.gold),
           ),
           // Lock (centre-bottom)
           Positioned(
@@ -357,10 +357,10 @@ class _TreasureChest extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700),
+                  color: WqColors.gold,
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: const Color(0xFF8B5E0A),
+                    color: WqColors.woodDark,
                     width: 2,
                   ),
                 ),
@@ -732,7 +732,7 @@ class _ComparePanel extends StatelessWidget {
           border: Border.all(color: borderColor, width: 5),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x22000000),
+              color: WqColors.shadow,
               blurRadius: 6,
               offset: Offset(0, 3),
             ),

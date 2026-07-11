@@ -11,6 +11,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
 import 'spot_me_screen.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // DetectiveConfig — shared by Letter, Number, Shape detective games
@@ -121,7 +122,7 @@ class _SingleFindScreenState extends ConsumerState<SingleFindScreen> {
         stars: 3,
         xp: cfg.xp,
         sticker: title ?? cfg.sticker,
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: cfg.progressTo,
       ),
       onPlayAgain: () {
@@ -328,7 +329,7 @@ class _ColorQuestScreenState extends ConsumerState<ColorQuestScreen> {
         stars: 3,
         xp: 26,
         sticker: title ?? '🎨',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 50,
       ),
       onPlayAgain: () {

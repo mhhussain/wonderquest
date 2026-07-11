@@ -13,6 +13,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/level_select.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/trace_canvas.dart';
+import '../../../core/progress_keys.dart';
 
 /// Letter Adventure — Game 4: Trace Letters.
 ///
@@ -44,7 +45,7 @@ class _TraceLettersScreenState extends ConsumerState<TraceLettersScreen> {
         stars: 4,
         xp: 30,
         sticker: '✏️',
-        progressKey: 'letter',
+        progressKey: ProgressKeys.letter,
         progressTo: 70,
       ),
       onPlayAgain: () {

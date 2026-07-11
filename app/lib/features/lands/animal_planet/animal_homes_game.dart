@@ -11,6 +11,7 @@ import '../../../domain/reward.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 /// Habitat drag-and-drop game.
 ///
@@ -104,7 +105,7 @@ class _AnimalHomesScreenState extends ConsumerState<AnimalHomesScreen> {
           stars: 3,
           xp: 30,
           sticker: '🌍',
-          progressKey: 'animal',
+          progressKey: ProgressKeys.animal,
           progressTo: 70,
         ),
         onPlayAgain: () {

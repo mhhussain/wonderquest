@@ -13,6 +13,7 @@ import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import '../../../widgets/spot_scene.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 /// Desert / oasis deco glyphs for the safari scene background.
 const _kSafariDeco = [
@@ -32,7 +33,7 @@ const _kSafariDeco = [
 const _kSafariPool = ['ا', 'ب', 'م', 'ل', 'س', 'ت'];
 
 /// Desert background color (sand tone).
-const _kSandBg = Color(0xFFF2D98C);
+const _kSandBg = WqColors.sand;
 
 /// Hoorof — Game 8: Safari Letter Hunt.
 ///
@@ -108,7 +109,7 @@ class _SafariHuntScreenState extends ConsumerState<SafariHuntScreen> {
         xp: 30,
         egg: true,
         sticker: '🐪',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {

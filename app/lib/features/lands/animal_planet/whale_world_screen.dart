@@ -10,6 +10,7 @@ import '../../../domain/reward.dart';
 import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Whale call SFX helper
@@ -111,7 +112,7 @@ class _WhaleWorldScreenState extends ConsumerState<WhaleWorldScreen> {
         xp: 28,
         egg: true,
         sticker: '🐋',
-        progressKey: 'animal',
+        progressKey: ProgressKeys.animal,
         progressTo: 75,
       ),
       onPlayAgain: () {
@@ -128,7 +129,7 @@ class _WhaleWorldScreenState extends ConsumerState<WhaleWorldScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A), // deep sea background
+      backgroundColor: WqColors.deepSea,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -11,6 +11,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import 'spot_me_screen.dart';
+import '../../../core/progress_keys.dart';
 
 // ---------------------------------------------------------------------------
 // Difference generator
@@ -205,7 +206,7 @@ class _SpotDifferenceScreenState extends ConsumerState<SpotDifferenceScreen> {
         xp: 30,
         egg: true,
         sticker: title ?? '🆚',
-        progressKey: 'find',
+        progressKey: ProgressKeys.find,
         progressTo: 60,
       ),
       onPlayAgain: () {

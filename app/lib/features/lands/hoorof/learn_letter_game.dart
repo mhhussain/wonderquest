@@ -11,6 +11,7 @@ import '../../../theme/wq_colors.dart';
 import '../../../theme/wq_theme.dart';
 import '../../../widgets/reward_modal.dart';
 import 'hoorof_utils.dart';
+import '../../../core/progress_keys.dart';
 
 /// Hoorof — Game 1: Learn the Letter.
 ///
@@ -167,7 +168,7 @@ class _LearnLetterScreenState extends ConsumerState<LearnLetterScreen>
         stars: 3,
         xp: 20,
         sticker: '🔤',
-        progressKey: 'arabic',
+        progressKey: ProgressKeys.arabic,
         progressTo: pt,
       ),
       onPlayAgain: () {
