@@ -15,12 +15,10 @@ import '../../../widgets/reward_modal.dart';
 // Whale call SFX helper
 // ---------------------------------------------------------------------------
 
-/// Returns the whale-call SFX for [whale].
-///
-/// baseFreq < 100 Hz (Blue 54, Sperm 46, Humpback 90) → [Sfx.whaleLow].
-/// baseFreq ≥ 100 Hz (Orca 130, Beluga 150, Narwhal 120) → [Sfx.whaleHigh].
-Sfx whaleCallSfx(Whale whale) =>
-    whale.baseFreq < 100 ? Sfx.whaleLow : Sfx.whaleHigh;
+/// Playback rate pitching the 80 Hz whale-call asset to [whale]'s base
+/// frequency, so every whale has a distinct voice (Blue 54 Hz → 0.675,
+/// Beluga 150 Hz → 1.875, …). Clamped to the platform-safe 0.5–2.0 range.
+double whaleCallRate(Whale whale) => SfxService.whaleCallRate(whale.baseFreq);
 
 /// Fraction of maximum dive depth (2000 m) for [whale].
 ///
@@ -92,7 +90,7 @@ class _WhaleWorldScreenState extends ConsumerState<WhaleWorldScreen> {
     );
     await Future<void>.delayed(const Duration(milliseconds: 700));
     if (!mounted) return;
-    unawaited(ref.read(sfxServiceProvider).play(whaleCallSfx(whale)));
+    unawaited(ref.read(sfxServiceProvider).playWhaleCall(whale.baseFreq));
   }
 
   void _readFact() {

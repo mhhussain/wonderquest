@@ -10,8 +10,7 @@ enum Sfx {
   ding,
   wrong,
   fanfare,
-  whaleLow,
-  whaleHigh,
+  whaleCall,
 }
 
 extension _SfxAsset on Sfx {
@@ -27,10 +26,8 @@ extension _SfxAsset on Sfx {
         return 'sfx/wrong.wav';
       case Sfx.fanfare:
         return 'sfx/fanfare.wav';
-      case Sfx.whaleLow:
-        return 'sfx/whale_low.wav';
-      case Sfx.whaleHigh:
-        return 'sfx/whale_high.wav';
+      case Sfx.whaleCall:
+        return 'sfx/whale_call.wav';
     }
   }
 }
@@ -46,11 +43,30 @@ class SfxService {
   SfxService(this._player, {required bool Function() soundOn})
       : _soundOn = soundOn;
 
+  /// Base frequency (Hz) the [Sfx.whaleCall] asset is synthesised at
+  /// (see `tool/gen_sfx.dart`).
+  static const double whaleCallBaseHz = 80;
+
   /// Play [sfx]. No-op when `soundOn` is false.
   Future<void> play(Sfx sfx) async {
     if (!_soundOn()) return;
+    await _player.setPlaybackRate(1.0);
     await _player.play(AssetSource(sfx.assetPath));
   }
+
+  /// Play the whale-call asset pitched to [baseFreqHz], giving each whale a
+  /// distinct voice. The 80 Hz reference is resampled via playback rate,
+  /// clamped to the platform-safe 0.5–2.0 range.
+  Future<void> playWhaleCall(double baseFreqHz) async {
+    if (!_soundOn()) return;
+    await _player.setPlaybackRate(whaleCallRate(baseFreqHz));
+    await _player.play(AssetSource(Sfx.whaleCall.assetPath));
+  }
+
+  /// Playback rate that pitches the 80 Hz whale-call asset to [baseFreqHz],
+  /// clamped to 0.5–2.0.
+  static double whaleCallRate(double baseFreqHz) =>
+      (baseFreqHz / whaleCallBaseHz).clamp(0.5, 2.0);
 }
 
 /// Provider for [SfxService].

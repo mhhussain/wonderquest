@@ -31,6 +31,9 @@ class _MemStore extends SaveFileStore {
 class _FakeSfxService implements SfxService {
   @override
   Future<void> play(Sfx sfx) async {}
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async {}
 }
 
 class _FakeTtsBackend implements TtsBackend {

@@ -33,6 +33,9 @@ class _FakeSfxService implements SfxService {
 
   @override
   Future<void> play(Sfx sfx) async => played.add(sfx);
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async {}
 }
 
 class _FakeTtsBackend implements TtsBackend {

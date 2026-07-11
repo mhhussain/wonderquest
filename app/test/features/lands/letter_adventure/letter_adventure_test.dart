@@ -36,6 +36,9 @@ class _MemStore extends SaveFileStore {
 class _FakeSfxService implements SfxService {
   @override
   Future<void> play(Sfx sfx) async {}
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async {}
 }
 
 /// Fake [TtsBackend] that records calls without touching platform channels.

@@ -29,7 +29,7 @@ const kSkillBars = <({String label, List<String> keys, Color color})>[
 
 /// Letter pairs young readers commonly confuse; flagged in coach notes when
 /// both members of a pair are in `lettersLearning`.
-const kConfusablePairs = [('B', 'D'), ('P', 'Q'), ('M', 'W')];
+const kConfusablePairs = [('B', 'D'), ('P', 'Q'), ('G', 'Q'), ('M', 'W')];
 
 /// Percent value (0–100) for one skill bar (mean of its progress keys).
 int skillPercent(List<String> keys, Map<String, int> progress) {

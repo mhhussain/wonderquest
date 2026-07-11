@@ -13,6 +13,9 @@ import 'package:wonder_quest/widgets/drift_field_widget.dart';
 class _FakeSfxService implements SfxService {
   @override
   Future<void> play(Sfx sfx) async {}
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async {}
 }
 
 // ---------------------------------------------------------------------------

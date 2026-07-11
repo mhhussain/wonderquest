@@ -14,6 +14,9 @@ import 'package:wonder_quest/widgets/spot_scene.dart';
 class _FakeSfxService implements SfxService {
   @override
   Future<void> play(Sfx sfx) async {}
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async {}
 }
 
 // ---------------------------------------------------------------------------

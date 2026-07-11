@@ -32,9 +32,14 @@ class _MemStore extends SaveFileStore {
 
 class _FakeSfxService implements SfxService {
   final List<Sfx> played = [];
+  final List<double> whaleCalls = [];
 
   @override
   Future<void> play(Sfx sfx) async => played.add(sfx);
+
+  @override
+  Future<void> playWhaleCall(double baseFreqHz) async =>
+      whaleCalls.add(baseFreqHz);
 }
 
 class _FakeTtsBackend implements TtsBackend {
@@ -114,37 +119,25 @@ void main() {
     });
   });
 
-  // ── whaleCallSfx unit tests ───────────────────────────────────────────────
+  // ── whaleCallRate unit tests ─────────────────────────────────────────────
 
-  group('whaleCallSfx', () {
-    test('Blue Whale (54 Hz) → whaleLow', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Blue Whale');
-      expect(whaleCallSfx(w), Sfx.whaleLow);
+  group('whaleCallRate', () {
+    test('rate = baseFreq / 80 for every whale (all within 0.5–2.0)', () {
+      for (final w in kWhales) {
+        expect(whaleCallRate(w), closeTo(w.baseFreq / 80, 1e-9),
+            reason: '${w.n} (${w.baseFreq} Hz)');
+        expect(whaleCallRate(w), inInclusiveRange(0.5, 2.0));
+      }
     });
 
-    test('Sperm Whale (46 Hz) → whaleLow', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Sperm Whale');
-      expect(whaleCallSfx(w), Sfx.whaleLow);
+    test('all 6 whales have distinct voices', () {
+      final rates = kWhales.map(whaleCallRate).toSet();
+      expect(rates.length, kWhales.length);
     });
 
-    test('Humpback Whale (90 Hz) → whaleLow', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Humpback Whale');
-      expect(whaleCallSfx(w), Sfx.whaleLow);
-    });
-
-    test('Orca (130 Hz) → whaleHigh', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Orca');
-      expect(whaleCallSfx(w), Sfx.whaleHigh);
-    });
-
-    test('Beluga Whale (150 Hz) → whaleHigh', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Beluga Whale');
-      expect(whaleCallSfx(w), Sfx.whaleHigh);
-    });
-
-    test('Narwhal (120 Hz) → whaleHigh', () {
-      final w = kWhales.firstWhere((w) => w.n == 'Narwhal');
-      expect(whaleCallSfx(w), Sfx.whaleHigh);
+    test('rates outside the platform-safe range are clamped', () {
+      expect(SfxService.whaleCallRate(10), 0.5);
+      expect(SfxService.whaleCallRate(1000), 2.0);
     });
   });
 

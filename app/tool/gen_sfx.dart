@@ -1,10 +1,10 @@
 // ignore_for_file: avoid_print
-// dev-time script: generates the 6 bundled SFX WAV files.
+// dev-time script: generates the 5 bundled SFX WAV files.
 //
 // Run from the `app/` directory:
 //   dart run tool/gen_sfx.dart
 //
-// Outputs: assets/sfx/{pop,ding,wrong,fanfare,whale_low,whale_high}.wav
+// Outputs: assets/sfx/{pop,ding,wrong,fanfare,whale_call}.wav
 // Format: 16-bit PCM mono 22 050 Hz (standard uncompressed WAV).
 import 'dart:io';
 import 'dart:math';
@@ -176,17 +176,13 @@ void main() {
     write('fanfare', [...seg1, ...seg2, ...seg3]);
   }
 
-  // ── whale_low: 80 Hz base, 4 Hz LFO, 2 semitones depth, 2 s ─────────────
+  // ── whale_call: 80 Hz reference, 4 Hz LFO, 2 semitones depth, 2 s ───────
+  // Pitched per-whale at playback time via SfxService.playWhaleCall
+  // (playbackRate = baseFreq / 80), so each whale gets a distinct voice.
   write(
-    'whale_low',
+    'whale_call',
     envelope(vibrato(80, 4, 2.0, 2.0), attackFrac: 0.1, releaseFrac: 0.2),
   );
 
-  // ── whale_high: 500 Hz base, 6 Hz LFO, 2 semitones depth, 1.5 s ─────────
-  write(
-    'whale_high',
-    envelope(vibrato(500, 6, 2.0, 1.5), attackFrac: 0.1, releaseFrac: 0.2),
-  );
-
-  print('Done — 6 files generated.');
+  print('Done — 5 files generated.');
 }
